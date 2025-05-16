@@ -56,7 +56,7 @@ export function WorkoutHistoryCalendar({ workouts }: WorkoutHistoryCalendarProps
   // Custom day render function to show dots for dates with workouts
   const renderDay = (props: DayProps) => {
     try {
-      const { date, ...dayProps } = props;
+      const { date } = props;
       
       // Validate that we have a valid date before proceeding
       if (!date || !isValid(date)) {
