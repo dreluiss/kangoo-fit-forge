@@ -4,9 +4,11 @@ import { pt } from "date-fns/locale";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Calendar } from "@/components/ui/calendar";
-import { Dumbbell, Calendar as CalendarIcon, Clock, ArrowRight } from "lucide-react";
+import { Dumbbell, Calendar as CalendarIcon, Clock, ArrowRight, Play } from "lucide-react";
 import { WorkoutExercise } from "./exercise-components";
 import { Badge } from "@/components/ui/badge";
+import { useState } from "react";
+import { WorkoutExecution } from "./workout-execution";
 
 export interface Workout {
   id: string;
@@ -14,6 +16,8 @@ export interface Workout {
   exercises: WorkoutExercise[];
   date: Date;
   completed?: boolean;
+  notes?: string;
+  executionDate?: Date;
 }
 
 interface WorkoutListProps {
@@ -170,16 +174,22 @@ export function WorkoutScheduler({ workouts, onDateSelected }: WorkoutSchedulerP
 
 interface WorkoutDetailProps {
   workout: Workout;
-  onComplete: (workoutId: string) => void;
+  onComplete: (workoutId: string, notes?: string) => void;
   onDelete: (workoutId: string) => void;
   onBack: () => void;
 }
 
 export function WorkoutDetail({ workout, onComplete, onDelete, onBack }: WorkoutDetailProps) {
+  const [isExecutionModalOpen, setIsExecutionModalOpen] = useState(false);
+  
   // Ensure the workout date is a Date object
   const workoutDate = workout.date instanceof Date ? workout.date : new Date(workout.date);
   const totalSets = workout.exercises.reduce((acc, ex) => acc + ex.sets, 0);
   const estimatedTime = totalSets * 2; // Estimativa simplificada: 2 minutos por série
+
+  const handleExecutionComplete = (notes: string) => {
+    onComplete(workout.id, notes);
+  };
 
   return (
     <div className="space-y-6">
@@ -190,12 +200,21 @@ export function WorkoutDetail({ workout, onComplete, onDelete, onBack }: Workout
         
         <div className="flex gap-2 self-end sm:self-auto">
           {!workout.completed && (
-            <Button 
-              variant="default" 
-              onClick={() => onComplete(workout.id)}
-            >
-              Marcar como concluído
-            </Button>
+            <>
+              <Button 
+                variant="default" 
+                onClick={() => setIsExecutionModalOpen(true)}
+                className="bg-green-600 hover:bg-green-700"
+              >
+                <Play className="mr-2 h-4 w-4" /> Iniciar Treino
+              </Button>
+              <Button 
+                variant="outline" 
+                onClick={() => onComplete(workout.id)}
+              >
+                Marcar como concluído
+              </Button>
+            </>
           )}
           <Button 
             variant="destructive" 
@@ -255,9 +274,29 @@ export function WorkoutDetail({ workout, onComplete, onDelete, onBack }: Workout
           </CardHeader>
           <CardContent>
             <p>Parabéns por concluir este treino!</p>
+            {workout.notes && (
+              <div className="mt-4 p-3 bg-background rounded-md border">
+                <p className="text-sm font-medium mb-1">Suas observações:</p>
+                <p className="text-sm text-muted-foreground">{workout.notes}</p>
+              </div>
+            )}
+            {workout.executionDate && (
+              <p className="text-sm text-muted-foreground mt-3">
+                Concluído em: {format(new Date(workout.executionDate), "dd/MM/yyyy 'às' HH:mm", { locale: pt })}
+              </p>
+            )}
           </CardContent>
         </Card>
       )}
+      
+      <WorkoutExecution 
+        open={isExecutionModalOpen}
+        onOpenChange={setIsExecutionModalOpen}
+        exercises={workout.exercises}
+        workoutName={workout.name}
+        onComplete={handleExecutionComplete}
+      />
     </div>
   );
 }
+

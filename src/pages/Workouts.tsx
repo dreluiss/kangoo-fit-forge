@@ -41,7 +41,8 @@ const Workouts = () => {
       const parsedWorkouts = JSON.parse(saved);
       return parsedWorkouts.map((workout: any) => ({
         ...workout,
-        date: new Date(workout.date)
+        date: new Date(workout.date),
+        executionDate: workout.executionDate ? new Date(workout.executionDate) : undefined
       }));
     } catch (error) {
       console.error("Error parsing workouts from localStorage:", error);
@@ -72,10 +73,15 @@ const Workouts = () => {
     navigate("/workouts/new");
   };
   
-  const handleCompleteWorkout = (workoutId: string) => {
+  const handleCompleteWorkout = (workoutId: string, notes?: string) => {
     setWorkouts(prev => 
       prev.map(w => 
-        w.id === workoutId ? { ...w, completed: true } : w
+        w.id === workoutId ? { 
+          ...w, 
+          completed: true,
+          notes: notes || w.notes,
+          executionDate: new Date()
+        } : w
       )
     );
     
