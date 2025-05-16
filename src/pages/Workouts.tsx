@@ -4,6 +4,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { AppHeader } from "@/components/app-header";
 import { WorkoutList, WorkoutDetail, Workout } from "@/components/workout-components";
 import { useToast } from "@/hooks/use-toast";
+import { Button } from "@/components/ui/button";
 
 // Mock de dados para treinos
 const initialWorkouts: Workout[] = [
@@ -33,7 +34,19 @@ const initialWorkouts: Workout[] = [
 const Workouts = () => {
   const [workouts, setWorkouts] = useState<Workout[]>(() => {
     const saved = localStorage.getItem("kangofit-workouts");
-    return saved ? JSON.parse(saved) : initialWorkouts;
+    if (!saved) return initialWorkouts;
+    
+    // Parse workouts and convert date strings back to Date objects
+    try {
+      const parsedWorkouts = JSON.parse(saved);
+      return parsedWorkouts.map((workout: any) => ({
+        ...workout,
+        date: new Date(workout.date)
+      }));
+    } catch (error) {
+      console.error("Error parsing workouts from localStorage:", error);
+      return initialWorkouts;
+    }
   });
   
   const { workoutId } = useParams();

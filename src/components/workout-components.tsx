@@ -23,7 +23,14 @@ interface WorkoutListProps {
 }
 
 export function WorkoutList({ workouts, onViewWorkout, onCreateWorkout }: WorkoutListProps) {
-  const sortedWorkouts = [...workouts].sort((a, b) => b.date.getTime() - a.date.getTime());
+  // Ensure all workout dates are Date objects before sorting
+  const sortedWorkouts = [...workouts]
+    .map(workout => ({
+      ...workout,
+      // Ensure date is a proper Date object
+      date: workout.date instanceof Date ? workout.date : new Date(workout.date)
+    }))
+    .sort((a, b) => b.date.getTime() - a.date.getTime());
   
   return (
     <div className="space-y-4">
@@ -101,13 +108,15 @@ interface WorkoutSchedulerProps {
 export function WorkoutScheduler({ workouts, onDateSelected }: WorkoutSchedulerProps) {
   // Function to convert workout dates to string format for showing dots in calendar
   const workoutDates = workouts.reduce((acc: Record<string, number>, workout) => {
-    const dateStr = format(new Date(workout.date), "yyyy-MM-dd");
+    // Ensure the date is a Date object before formatting
+    const date = workout.date instanceof Date ? workout.date : new Date(workout.date);
+    const dateStr = format(date, "yyyy-MM-dd");
     acc[dateStr] = (acc[dateStr] || 0) + 1;
     return acc;
   }, {});
   
   // Custom render function for calendar day
-  const renderDay = (day: Date) => {
+  const renderDay = (day: any) => {
     const dateStr = format(day, "yyyy-MM-dd");
     const count = workoutDates[dateStr] || 0;
     
@@ -149,6 +158,8 @@ interface WorkoutDetailProps {
 }
 
 export function WorkoutDetail({ workout, onComplete, onDelete, onBack }: WorkoutDetailProps) {
+  // Ensure the workout date is a Date object
+  const workoutDate = workout.date instanceof Date ? workout.date : new Date(workout.date);
   const totalSets = workout.exercises.reduce((acc, ex) => acc + ex.sets, 0);
   const estimatedTime = totalSets * 2; // Estimativa simplificada: 2 minutos por série
 
@@ -182,7 +193,7 @@ export function WorkoutDetail({ workout, onComplete, onDelete, onBack }: Workout
         <div className="flex gap-4 mt-2">
           <div className="flex items-center text-muted-foreground">
             <CalendarIcon className="mr-2 h-4 w-4" />
-            {format(new Date(workout.date), "dd 'de' MMMM, yyyy", { locale: pt })}
+            {format(workoutDate, "dd 'de' MMMM, yyyy", { locale: pt })}
           </div>
           <div className="flex items-center text-muted-foreground">
             <Clock className="mr-2 h-4 w-4" />
