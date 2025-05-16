@@ -39,27 +39,23 @@ export function KangooMascot({ className, variant = 'default', message }: Kangoo
       className
     )}>
       <div className="relative">
-        <svg 
-          className={cn(
-            "text-kangoo-light animate-bounce", 
-            variant === 'small' ? "h-10 w-10" : "h-20 w-20"
-          )} 
-          viewBox="0 0 100 100" 
-          fill="currentColor"
-        >
-          {/* Simple kangoo silhouette */}
-          <path d="M50,10 C30,10 25,30 25,50 C25,70 35,90 50,90 C65,90 75,70 75,50 C75,30 70,10 50,10 Z" />
-          {/* Eyes */}
-          <circle cx="40" cy="40" r="3" fill="white" />
-          <circle cx="60" cy="40" r="3" fill="white" />
-          {/* Smile */}
-          <path d="M40,55 Q50,65 60,55" fill="none" stroke="white" strokeWidth="2" />
-          {/* Ears */}
-          <ellipse cx="35" cy="25" rx="5" ry="10" />
-          <ellipse cx="65" cy="25" rx="5" ry="10" />
-          {/* Pouch */}
-          <ellipse cx="50" cy="65" rx="10" ry="5" fill="rgba(255,255,255,0.3)" />
-        </svg>
+        {variant === 'small' ? (
+          <div className="w-10 h-10 rounded-full overflow-hidden">
+            <img 
+              src="/lovable-uploads/e7a0f49c-67f9-4534-87fc-f47996238d73.png" 
+              alt="Kangoo AI" 
+              className="w-full h-full object-cover"
+            />
+          </div>
+        ) : (
+          <div className="w-20 h-20 rounded-full overflow-hidden">
+            <img 
+              src="/lovable-uploads/e7a0f49c-67f9-4534-87fc-f47996238d73.png" 
+              alt="Kangoo AI" 
+              className="w-full h-full object-cover"
+            />
+          </div>
+        )}
         <div className={cn(
           "absolute -top-1 -right-1 bg-secondary text-white rounded-full flex items-center justify-center",
           variant === 'small' ? "w-4 h-4 text-[8px]" : "w-6 h-6 text-xs"
