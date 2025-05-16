@@ -7,7 +7,7 @@ import { Workout } from "@/components/workout-components";
 import { Button } from "@/components/ui/button";
 import { WorkoutHistoryDetail } from "@/components/workout-history-components";
 import { CheckCircle, ArrowRight } from "lucide-react";
-import { DayContent, DayProps } from "react-day-picker";
+import { DayContent } from "react-day-picker";
 
 interface WorkoutHistoryCalendarProps {
   workouts: Workout[];
@@ -53,7 +53,7 @@ export function WorkoutHistoryCalendar({ workouts }: WorkoutHistoryCalendarProps
   }, [selectedDate, completedWorkouts]);
   
   // Custom day render function to show dots for dates with workouts
-  const renderDay = (props: DayProps) => {
+  const renderDay = (props: React.ComponentProps<typeof DayContent>) => {
     try {
       const { date } = props;
       
