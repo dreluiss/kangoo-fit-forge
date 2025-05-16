@@ -16,7 +16,8 @@ import {
 import { KangooMascot } from "./kangoo-mascot";
 
 export function AppSidebar() {
-  const { collapsed } = useSidebar();
+  const sidebar = useSidebar();
+  const isCollapsed = sidebar.isCollapsed;
   const location = useLocation();
   const currentPath = location.pathname;
 
@@ -45,27 +46,26 @@ export function AppSidebar() {
     <Sidebar
       className={cn(
         "border-r transition-all duration-300",
-        collapsed ? "w-16" : "w-64"
+        isCollapsed ? "w-16" : "w-64"
       )}
-      collapsible
     >
       {/* Logo area */}
       <div className={cn(
         "flex items-center h-14 px-4 border-b",
-        collapsed ? "justify-center" : "justify-between"
+        isCollapsed ? "justify-center" : "justify-between"
       )}>
-        {!collapsed && (
+        {!isCollapsed && (
           <span className="font-bold text-xl bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
             KangoFit
           </span>
         )}
-        {collapsed && <KangooMascot variant="small" />}
+        {isCollapsed && <KangooMascot variant="small" />}
         <SidebarTrigger />
       </div>
 
       <SidebarContent>
         {/* Dashboard & Workouts */}
-        <SidebarGroup open={isDashboardActive} defaultOpen>
+        <SidebarGroup defaultOpen={isDashboardActive}>
           <SidebarGroupLabel>Principal</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
@@ -78,7 +78,7 @@ export function AppSidebar() {
                       className={getNavCls}
                     >
                       <item.icon className="mr-2 h-4 w-4" />
-                      {!collapsed && <span>{item.title}</span>}
+                      {!isCollapsed && <span>{item.title}</span>}
                     </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -88,7 +88,7 @@ export function AppSidebar() {
         </SidebarGroup>
 
         {/* Exercise & Calendar */}
-        <SidebarGroup open={isWorkoutActive}>
+        <SidebarGroup defaultOpen={isWorkoutActive}>
           <SidebarGroupLabel>Gerenciar</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
@@ -97,7 +97,7 @@ export function AppSidebar() {
                   <SidebarMenuButton asChild>
                     <NavLink to={item.url} className={getNavCls}>
                       <item.icon className="mr-2 h-4 w-4" />
-                      {!collapsed && <span>{item.title}</span>}
+                      {!isCollapsed && <span>{item.title}</span>}
                     </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -107,7 +107,7 @@ export function AppSidebar() {
         </SidebarGroup>
 
         {/* Profile */}
-        <SidebarGroup open={isProfileActive}>
+        <SidebarGroup defaultOpen={isProfileActive}>
           <SidebarGroupLabel>Usuário</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
@@ -116,7 +116,7 @@ export function AppSidebar() {
                   <SidebarMenuButton asChild>
                     <NavLink to={item.url} className={getNavCls}>
                       <item.icon className="mr-2 h-4 w-4" />
-                      {!collapsed && <span>{item.title}</span>}
+                      {!isCollapsed && <span>{item.title}</span>}
                     </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -127,7 +127,7 @@ export function AppSidebar() {
       </SidebarContent>
 
       {/* Kangoo at bottom if not collapsed */}
-      {!collapsed && (
+      {!isCollapsed && (
         <div className="mt-auto p-4 border-t">
           <KangooMascot variant="small" className="flex-row gap-3 justify-start" />
         </div>
