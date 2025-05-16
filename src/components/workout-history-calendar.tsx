@@ -8,6 +8,7 @@ import { Workout } from "@/components/workout-components";
 import { Button } from "@/components/ui/button";
 import { WorkoutHistoryDetail } from "@/components/workout-history-components";
 import { CheckCircle, ArrowRight } from "lucide-react";
+import { DayContent, DayProps } from "react-day-picker";
 
 interface WorkoutHistoryCalendarProps {
   workouts: Workout[];
@@ -53,17 +54,21 @@ export function WorkoutHistoryCalendar({ workouts }: WorkoutHistoryCalendarProps
   }, [selectedDate, completedWorkouts]);
   
   // Custom day render function to show dots for dates with workouts
-  const renderDay = (day: Date) => {
+  const renderDay = (props: DayProps) => {
     try {
-      // Validate that we have a valid date before proceeding
-      if (!day || !isValid(day)) return null;
+      const { date, ...dayProps } = props;
       
-      const dateKey = format(day, "yyyy-MM-dd");
+      // Validate that we have a valid date before proceeding
+      if (!date || !isValid(date)) {
+        return <DayContent {...props} />;
+      }
+      
+      const dateKey = format(date, "yyyy-MM-dd");
       const hasWorkouts = workoutsByDate[dateKey] && workoutsByDate[dateKey].length > 0;
       
       return (
         <div className="relative h-9 w-9 p-0 flex items-center justify-center">
-          <span>{format(day, "d")}</span>
+          <DayContent {...props} />
           {hasWorkouts && (
             <div className="absolute bottom-1 w-1 h-1 bg-primary rounded-full" />
           )}
@@ -71,7 +76,7 @@ export function WorkoutHistoryCalendar({ workouts }: WorkoutHistoryCalendarProps
       );
     } catch (error) {
       console.error("Error rendering calendar day:", error);
-      return null;
+      return <DayContent {...props} />;
     }
   };
   
