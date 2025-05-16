@@ -3,7 +3,7 @@ import { Bell, Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { SidebarTrigger } from "@/components/ui/sidebar";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { 
   DropdownMenu,
   DropdownMenuContent,
@@ -13,6 +13,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
 
 interface AppHeaderProps {
   title?: string;
@@ -20,6 +21,15 @@ interface AppHeaderProps {
 
 export function AppHeader({ title = "Dashboard" }: AppHeaderProps) {
   const navigate = useNavigate();
+  const [profileImage, setProfileImage] = useState<string | null>(null);
+  
+  // Load profile image from localStorage
+  useEffect(() => {
+    const savedImage = localStorage.getItem("kangofit-profile-image");
+    if (savedImage) {
+      setProfileImage(savedImage);
+    }
+  }, []);
 
   const handleLogout = () => {
     // Simulate logout by redirecting to login page
@@ -43,9 +53,13 @@ export function AppHeader({ title = "Dashboard" }: AppHeaderProps) {
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Avatar className="h-8 w-8 cursor-pointer">
-              <AvatarFallback className="bg-primary/20 text-primary-foreground text-sm">
-                KF
-              </AvatarFallback>
+              {profileImage ? (
+                <AvatarImage src={profileImage} />
+              ) : (
+                <AvatarFallback className="bg-primary/20 text-primary-foreground text-sm">
+                  KF
+                </AvatarFallback>
+              )}
             </Avatar>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
@@ -53,6 +67,9 @@ export function AppHeader({ title = "Dashboard" }: AppHeaderProps) {
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={() => navigate("/profile")}>
               Perfil
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => navigate("/workout-history")}>
+              Histórico de Treinos
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => navigate("/settings")}>
               Configurações

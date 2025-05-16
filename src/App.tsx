@@ -16,6 +16,7 @@ import CreateWorkout from "./pages/CreateWorkout";
 import Exercises from "./pages/Exercises";
 import Calendar from "./pages/Calendar";
 import Profile from "./pages/Profile";
+import WorkoutHistory from "./pages/WorkoutHistory";
 import NotFound from "./pages/NotFound";
 
 // Layouts
@@ -44,6 +45,7 @@ const App = () => (
             <Route path="/exercises" element={<Exercises />} />
             <Route path="/calendar" element={<Calendar />} />
             <Route path="/profile" element={<Profile />} />
+            <Route path="/workout-history" element={<WorkoutHistory />} />
           </Route>
           
           {/* Fallbacks */}

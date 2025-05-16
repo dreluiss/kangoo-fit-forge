@@ -1,15 +1,23 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { AppHeader } from "@/components/app-header";
 import { KangooMascot } from "@/components/kangoo-mascot";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent } from "@/components/ui/card";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
+import { 
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Camera } from "lucide-react";
 
 const Profile = () => {
   const [name, setName] = useState("Usuário KangoFit");
@@ -17,13 +25,25 @@ const Profile = () => {
   const [height, setHeight] = useState("175");
   const [weight, setWeight] = useState("70");
   const [objective, setObjective] = useState("Ganho de massa muscular");
+  const [profileImage, setProfileImage] = useState<string | null>(() => {
+    return localStorage.getItem("kangofit-profile-image");
+  });
+  const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
   
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
   
   useEffect(() => {
     document.title = "Meu Perfil | KangoFit";
   }, []);
+
+  useEffect(() => {
+    // Save profile image to localStorage when it changes
+    if (profileImage) {
+      localStorage.setItem("kangofit-profile-image", profileImage);
+    }
+  }, [profileImage]);
 
   const handleSaveProfile = () => {
     // Save profile data (mock)
@@ -37,17 +57,77 @@ const Profile = () => {
     navigate("/login");
   };
   
+  const handleUploadImage = () => {
+    setIsUploadDialogOpen(true);
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      // Check if the file is an image
+      if (!file.type.match('image.*')) {
+        toast({
+          title: "Formato inválido",
+          description: "Por favor, envie apenas imagens (jpg, png).",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Read the file and convert to data URL
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        if (event.target?.result) {
+          setProfileImage(event.target.result as string);
+          setIsUploadDialogOpen(false);
+          toast({
+            title: "Imagem atualizada",
+            description: "Sua foto de perfil foi atualizada com sucesso!",
+          });
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleRemoveImage = () => {
+    setProfileImage(null);
+    localStorage.removeItem("kangofit-profile-image");
+    setIsUploadDialogOpen(false);
+    toast({
+      title: "Imagem removida",
+      description: "Sua foto de perfil foi removida com sucesso.",
+    });
+  };
+  
+  // Get user initials for avatar fallback
+  const getInitials = () => {
+    return name.split(" ").map(n => n[0]).join("").toUpperCase();
+  };
+  
   return (
     <div className="flex flex-col min-h-screen">
       <AppHeader title="Meu Perfil" />
       <main className="flex-1 p-4 md:p-6">
         <div className="max-w-3xl mx-auto space-y-8">
           <div className="flex flex-col md:flex-row gap-6 items-center">
-            <Avatar className="h-24 w-24">
-              <AvatarFallback className="text-xl bg-primary/20 text-primary">
-                {name.split(" ").map(n => n[0]).join("").toUpperCase()}
-              </AvatarFallback>
-            </Avatar>
+            <div className="relative">
+              <Avatar className="h-24 w-24 cursor-pointer" onClick={handleUploadImage}>
+                {profileImage ? (
+                  <AvatarImage src={profileImage} alt={name} />
+                ) : (
+                  <AvatarFallback className="text-xl bg-primary/20 text-primary">
+                    {getInitials()}
+                  </AvatarFallback>
+                )}
+              </Avatar>
+              <button 
+                className="absolute bottom-0 right-0 bg-primary text-primary-foreground rounded-full p-1 shadow-md"
+                onClick={handleUploadImage}
+              >
+                <Camera className="h-4 w-4" />
+              </button>
+            </div>
             
             <div className="space-y-1">
               <h1 className="text-2xl font-bold">{name}</h1>
@@ -112,6 +192,57 @@ const Profile = () => {
           </Card>
         </div>
       </main>
+
+      {/* Image Upload Dialog */}
+      <Dialog open={isUploadDialogOpen} onOpenChange={setIsUploadDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Foto de perfil</DialogTitle>
+            <DialogDescription>
+              Escolha uma imagem para usar como sua foto de perfil.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="flex flex-col items-center gap-6 py-4">
+            <Avatar className="h-32 w-32">
+              {profileImage ? (
+                <AvatarImage src={profileImage} alt={name} />
+              ) : (
+                <AvatarFallback className="text-4xl bg-primary/20 text-primary">
+                  {getInitials()}
+                </AvatarFallback>
+              )}
+            </Avatar>
+            
+            <div className="flex flex-col gap-2 w-full">
+              <input
+                type="file"
+                accept="image/png, image/jpeg"
+                className="hidden"
+                ref={fileInputRef}
+                onChange={handleFileChange}
+              />
+              
+              <Button 
+                className="w-full" 
+                onClick={() => fileInputRef.current?.click()}
+              >
+                Escolher imagem
+              </Button>
+              
+              {profileImage && (
+                <Button 
+                  variant="outline" 
+                  className="w-full" 
+                  onClick={handleRemoveImage}
+                >
+                  Remover imagem
+                </Button>
+              )}
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
