@@ -42,7 +42,7 @@ export function KangooMascot({ className, variant = 'default', message }: Kangoo
         {variant === 'small' ? (
           <div className="w-10 h-10 rounded-full overflow-hidden">
             <img 
-              src="/lovable-uploads/e7a0f49c-67f9-4534-87fc-f47996238d73.png" 
+              src="/lovable-uploads/072895f9-4fea-4e82-8ec2-0a8900622c64.png" 
               alt="Kangoo AI" 
               className="w-full h-full object-cover"
             />
@@ -50,7 +50,7 @@ export function KangooMascot({ className, variant = 'default', message }: Kangoo
         ) : (
           <div className="w-20 h-20 rounded-full overflow-hidden">
             <img 
-              src="/lovable-uploads/e7a0f49c-67f9-4534-87fc-f47996238d73.png" 
+              src="/lovable-uploads/072895f9-4fea-4e82-8ec2-0a8900622c64.png" 
               alt="Kangoo AI" 
               className="w-full h-full object-cover"
             />

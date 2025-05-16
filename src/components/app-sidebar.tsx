@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { NavLink, useLocation } from "react-router-dom";
-import { ChartBar, Dumbbell, User, Plus, Calendar, Menu } from "lucide-react";
+import { ChartBar, Dumbbell, User, Plus, Calendar, Menu, FileBarChart } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -27,6 +27,7 @@ export function AppSidebar() {
     { title: "Meus Treinos", url: "/workouts", icon: Dumbbell },
     { title: "Exercícios", url: "/exercises", icon: Plus },
     { title: "Calendário", url: "/calendar", icon: Calendar },
+    { title: "Histórico", url: "/workout-history", icon: FileBarChart },
     { title: "Perfil", url: "/profile", icon: User },
   ];
 
@@ -34,9 +35,9 @@ export function AppSidebar() {
   const isActive = (path: string) => currentPath === path || currentPath.startsWith(`${path}/`);
   
   // Keep groups expanded if they contain the active route
-  const isDashboardActive = navItems.slice(0, 2).some((item) => isActive(item.url));
-  const isWorkoutActive = navItems.slice(2, 4).some((item) => isActive(item.url));
-  const isProfileActive = isActive(navItems[4].url);
+  const isDashboardActive = navItems.slice(0, 3).some((item) => isActive(item.url));
+  const isWorkoutActive = navItems.slice(3, 5).some((item) => isActive(item.url));
+  const isProfileActive = isActive(navItems[5].url);
   
   // Helper for nav link classes - making colors more visible in light mode
   const getNavCls = ({ isActive }: { isActive: boolean }) =>
@@ -60,7 +61,7 @@ export function AppSidebar() {
           <div className="flex items-center gap-2">
             <div className="w-6 h-6 rounded-full overflow-hidden">
               <img 
-                src="/lovable-uploads/e7a0f49c-67f9-4534-87fc-f47996238d73.png" 
+                src="/lovable-uploads/072895f9-4fea-4e82-8ec2-0a8900622c64.png" 
                 alt="KangoFit" 
                 className="w-full h-full object-cover"
               />
@@ -75,12 +76,12 @@ export function AppSidebar() {
       </div>
 
       <SidebarContent>
-        {/* Dashboard & Workouts */}
+        {/* Dashboard, Workouts & Exercises */}
         <SidebarGroup>
           <SidebarGroupLabel>Principal</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {navItems.slice(0, 2).map((item) => (
+              {navItems.slice(0, 3).map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild>
                     <NavLink
@@ -98,12 +99,12 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {/* Exercise & Calendar */}
+        {/* Calendar & Reports */}
         <SidebarGroup>
           <SidebarGroupLabel>Gerenciar</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {navItems.slice(2, 4).map((item) => (
+              {navItems.slice(3, 5).map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild>
                     <NavLink to={item.url} className={getNavCls}>
@@ -122,7 +123,7 @@ export function AppSidebar() {
           <SidebarGroupLabel>Usuário</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {navItems.slice(4).map((item) => (
+              {navItems.slice(5).map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild>
                     <NavLink to={item.url} className={getNavCls}>

@@ -19,12 +19,39 @@ import {
 } from "@/components/ui/dialog";
 import { Camera } from "lucide-react";
 
+// Interface para os dados do perfil
+interface ProfileData {
+  name: string;
+  email: string;
+  height: string;
+  weight: string;
+  objective: string;
+}
+
 const Profile = () => {
-  const [name, setName] = useState("Usuário KangoFit");
-  const [email, setEmail] = useState("usuario@exemplo.com");
-  const [height, setHeight] = useState("175");
-  const [weight, setWeight] = useState("70");
-  const [objective, setObjective] = useState("Ganho de massa muscular");
+  const [profileData, setProfileData] = useState<ProfileData>(() => {
+    // Carregar dados do localStorage, se existirem
+    const savedData = localStorage.getItem("kangofit-profile-data");
+    if (savedData) {
+      try {
+        return JSON.parse(savedData);
+      } catch (error) {
+        console.error("Error parsing profile data:", error);
+      }
+    }
+    
+    // Valores padrão se não houver dados salvos
+    return {
+      name: "Usuário KangoFit",
+      email: "usuario@exemplo.com",
+      height: "175",
+      weight: "70",
+      objective: "Ganho de massa muscular"
+    };
+  });
+  
+  const { name, email, height, weight, objective } = profileData;
+  
   const [profileImage, setProfileImage] = useState<string | null>(() => {
     return localStorage.getItem("kangofit-profile-image");
   });
@@ -44,9 +71,22 @@ const Profile = () => {
       localStorage.setItem("kangofit-profile-image", profileImage);
     }
   }, [profileImage]);
+  
+  // Salvar dados do perfil no localStorage quando mudam
+  useEffect(() => {
+    localStorage.setItem("kangofit-profile-data", JSON.stringify(profileData));
+  }, [profileData]);
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { id, value } = e.target;
+    setProfileData(prev => ({
+      ...prev,
+      [id]: value
+    }));
+  };
 
   const handleSaveProfile = () => {
-    // Save profile data (mock)
+    // Dados já estão sendo salvos automaticamente no localStorage
     toast({
       title: "Perfil atualizado",
       description: "Suas informações foram salvas com sucesso!",
@@ -150,27 +190,27 @@ const Profile = () => {
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
                 <Label htmlFor="name">Nome</Label>
-                <Input id="name" value={name} onChange={(e) => setName(e.target.value)} />
+                <Input id="name" value={name} onChange={handleInputChange} />
               </div>
               
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
-                <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
+                <Input id="email" type="email" value={email} onChange={handleInputChange} />
               </div>
               
               <div className="space-y-2">
                 <Label htmlFor="height">Altura (cm)</Label>
-                <Input id="height" type="number" value={height} onChange={(e) => setHeight(e.target.value)} />
+                <Input id="height" type="number" value={height} onChange={handleInputChange} />
               </div>
               
               <div className="space-y-2">
                 <Label htmlFor="weight">Peso (kg)</Label>
-                <Input id="weight" type="number" value={weight} onChange={(e) => setWeight(e.target.value)} />
+                <Input id="weight" type="number" value={weight} onChange={handleInputChange} />
               </div>
               
               <div className="space-y-2 md:col-span-2">
                 <Label htmlFor="objective">Objetivo</Label>
-                <Input id="objective" value={objective} onChange={(e) => setObjective(e.target.value)} />
+                <Input id="objective" value={objective} onChange={handleInputChange} />
               </div>
             </div>
             
