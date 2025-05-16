@@ -108,26 +108,44 @@ interface WorkoutSchedulerProps {
 export function WorkoutScheduler({ workouts, onDateSelected }: WorkoutSchedulerProps) {
   // Function to convert workout dates to string format for showing dots in calendar
   const workoutDates = workouts.reduce((acc: Record<string, number>, workout) => {
-    // Ensure the date is a Date object before formatting
-    const date = workout.date instanceof Date ? workout.date : new Date(workout.date);
-    const dateStr = format(date, "yyyy-MM-dd");
-    acc[dateStr] = (acc[dateStr] || 0) + 1;
+    try {
+      // Ensure the date is a valid Date object before formatting
+      const date = workout.date instanceof Date ? workout.date : new Date(workout.date);
+      if (isNaN(date.getTime())) {
+        console.error("Invalid date found in workout:", workout);
+        return acc;
+      }
+      const dateStr = format(date, "yyyy-MM-dd");
+      acc[dateStr] = (acc[dateStr] || 0) + 1;
+    } catch (error) {
+      console.error("Error processing workout date:", error, workout);
+    }
     return acc;
   }, {});
   
   // Custom render function for calendar day
   const renderDay = (day: any) => {
-    const dateStr = format(day, "yyyy-MM-dd");
-    const count = workoutDates[dateStr] || 0;
-    
-    return (
-      <div className="relative h-9 w-9 p-0 flex items-center justify-center">
-        {format(day, "d")}
-        {count > 0 && (
-          <div className="absolute bottom-1 w-1 h-1 bg-primary rounded-full" />
-        )}
-      </div>
-    );
+    try {
+      // Validate that the day is a valid date
+      if (!day || !(day instanceof Date) || isNaN(day.getTime())) {
+        return <div className="relative h-9 w-9 p-0 flex items-center justify-center">-</div>;
+      }
+      
+      const dateStr = format(day, "yyyy-MM-dd");
+      const count = workoutDates[dateStr] || 0;
+      
+      return (
+        <div className="relative h-9 w-9 p-0 flex items-center justify-center">
+          {format(day, "d")}
+          {count > 0 && (
+            <div className="absolute bottom-1 w-1 h-1 bg-primary rounded-full" />
+          )}
+        </div>
+      );
+    } catch (error) {
+      console.error("Error rendering day:", error, day);
+      return <div className="relative h-9 w-9 p-0 flex items-center justify-center">-</div>;
+    }
   };
 
   return (
@@ -143,7 +161,7 @@ export function WorkoutScheduler({ workouts, onDateSelected }: WorkoutSchedulerP
           components={{
             Day: renderDay,
           }}
-          className="rounded-md border"
+          className="rounded-md border pointer-events-auto"
         />
       </CardContent>
     </Card>

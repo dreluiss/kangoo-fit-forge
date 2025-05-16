@@ -11,11 +11,19 @@ import { pt } from "date-fns/locale";
 
 const Calendar = () => {
   const [workouts, setWorkouts] = useState<Workout[]>(() => {
-    const saved = localStorage.getItem("kangofit-workouts");
-    return saved ? JSON.parse(saved).map((w: any) => ({
-      ...w,
-      date: new Date(w.date)
-    })) : [];
+    try {
+      const saved = localStorage.getItem("kangofit-workouts");
+      if (!saved) return [];
+      
+      const parsedWorkouts = JSON.parse(saved);
+      return parsedWorkouts.map((w: any) => ({
+        ...w,
+        date: new Date(w.date)
+      }));
+    } catch (error) {
+      console.error("Error loading workouts from localStorage:", error);
+      return [];
+    }
   });
 
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
@@ -27,11 +35,18 @@ const Calendar = () => {
   
   // Filter workouts for selected date
   const workoutsForSelectedDay = selectedDate
-    ? workouts.filter(
-        (workout) =>
-          format(new Date(workout.date), "yyyy-MM-dd") === 
-          format(selectedDate, "yyyy-MM-dd")
-      )
+    ? workouts.filter(workout => {
+        try {
+          if (!workout.date) return false;
+          const workoutDate = workout.date instanceof Date ? workout.date : new Date(workout.date);
+          if (isNaN(workoutDate.getTime())) return false;
+          
+          return format(workoutDate, "yyyy-MM-dd") === format(selectedDate, "yyyy-MM-dd");
+        } catch (error) {
+          console.error("Error filtering workout:", error, workout);
+          return false;
+        }
+      })
     : [];
 
   const handleDateSelected = (date: Date | undefined) => {
