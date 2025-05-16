@@ -45,20 +45,11 @@ const Dashboard = () => {
           <UpcomingWorkoutsCard />
         </div>
         
-        <div className="border rounded-lg p-6">
+        <div className="border rounded-lg p-12">
           <div className="flex flex-col md:flex-row items-center md:justify-between gap-6">
-            <div className="flex items-center gap-4">
-              <KangooMascot />
-              <div>
-                <h3 className="text-xl font-bold mb-1">Pronto para treinar?</h3>
-                <p className="text-muted-foreground">
-                  Inicie seu treino de hoje e mantenha seu progresso.
-                </p>
-              </div>
+            <div className="flex items-center gap-12">
+              <KangooMascot />  
             </div>
-            <Button size="lg" onClick={() => navigate("/workouts/new")}>
-              Iniciar Treino
-            </Button>
           </div>
         </div>
       </main>
