@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { AppHeader } from "@/components/app-header";
 import { 
@@ -41,7 +40,7 @@ const Exercises = () => {
     <div className="flex flex-col min-h-screen">
       <AppHeader title="Exercícios" />
       <main className="flex-1 p-4 md:p-6">
-        <div className="max-w-6xl mx-auto">
+        <div className="max-w-6xl mx-auto w-full">
           <ExerciseTable 
             exercises={exercises}
             onAddExercise={handleAddExercise}
@@ -49,7 +48,7 @@ const Exercises = () => {
             onDeleteExercise={handleDeleteExercise}
           />
           
-          <div className="mt-8 p-6 border rounded-lg">
+          <div className="mt-8 p-4 md:p-6 border rounded-lg">
             <div className="flex items-center gap-4">
               <KangooMascot variant="small" />
               <div>

@@ -45,6 +45,13 @@ export function AppSidebar() {
       ? "bg-sidebar-accent text-primary font-medium" 
       : "hover:bg-sidebar-accent/50 text-sidebar-foreground/90 dark:text-sidebar-foreground";
 
+  // Handle navigation click - close mobile sidebar
+  const handleNavClick = () => {
+    if (sidebar.isMobile) {
+      sidebar.setOpenMobile(false);
+    }
+  };
+
   return (
     <Sidebar
       className={cn(
@@ -88,6 +95,7 @@ export function AppSidebar() {
                       to={item.url}
                       end={item.url === "/dashboard"}
                       className={getNavCls}
+                      onClick={handleNavClick}
                     >
                       <item.icon className="mr-2 h-4 w-4" />
                       {!collapsed && <span>{item.title}</span>}
@@ -107,7 +115,11 @@ export function AppSidebar() {
               {navItems.slice(3, 5).map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild>
-                    <NavLink to={item.url} className={getNavCls}>
+                    <NavLink 
+                      to={item.url} 
+                      className={getNavCls}
+                      onClick={handleNavClick}
+                    >
                       <item.icon className="mr-2 h-4 w-4" />
                       {!collapsed && <span>{item.title}</span>}
                     </NavLink>
@@ -126,7 +138,11 @@ export function AppSidebar() {
               {navItems.slice(5).map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild>
-                    <NavLink to={item.url} className={getNavCls}>
+                    <NavLink 
+                      to={item.url} 
+                      className={getNavCls}
+                      onClick={handleNavClick}
+                    >
                       <item.icon className="mr-2 h-4 w-4" />
                       {!collapsed && <span>{item.title}</span>}
                     </NavLink>

@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -27,6 +26,15 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+} from "@/components/ui/dropdown-menu";
+import { MoreVertical, Eye, Edit, Trash } from "lucide-react";
+import { format } from "date-fns";
+import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 
 // Tipos
 export interface Exercise {
@@ -74,10 +82,10 @@ export function ExerciseTable({
   onDeleteExercise,
 }: ExerciseTableProps) {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [currentExercise, setCurrentExercise] = useState<Partial<Exercise> | null>(
-    null
-  );
+  const [currentExercise, setCurrentExercise] = useState<Partial<Exercise> | null>(null);
   const [isEditing, setIsEditing] = useState(false);
+  const [viewExercise, setViewExercise] = useState<Exercise | null>(null);
+
   const { toast } = useToast();
 
   const handleAddNew = () => {
@@ -138,38 +146,40 @@ export function ExerciseTable({
         <h2 className="text-xl font-bold">Exercícios</h2>
         <Button onClick={handleAddNew}>Novo Exercício</Button>
       </div>
-      <div className="rounded-md border">
+      <div className="rounded-md border overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Nome</TableHead>
-              <TableHead>Categoria</TableHead>
-              <TableHead>Equipamento</TableHead>
-              <TableHead className="w-[100px]">Ações</TableHead>
+              <TableHead className="min-w-[200px]">Nome</TableHead>
+              <TableHead className="w-12 text-center">Ações</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {exercises.map((exercise) => (
               <TableRow key={exercise.id}>
                 <TableCell className="font-medium">{exercise.name}</TableCell>
-                <TableCell>{exercise.category}</TableCell>
-                <TableCell>{exercise.equipment || "—"}</TableCell>
-                <TableCell className="flex space-x-2">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleEdit(exercise)}
-                  >
-                    Editar
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="text-destructive hover:text-destructive"
-                    onClick={() => handleDelete(exercise.id)}
-                  >
-                    Excluir
-                  </Button>
+                <TableCell className="text-center">
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon">
+                        <MoreVertical className="w-5 h-5" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={() => setViewExercise(exercise)}>
+                        <Eye className="w-4 h-4 mr-2" /> Visualizar
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => handleEdit(exercise)}>
+                        <Edit className="w-4 h-4 mr-2" /> Editar
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() => handleDelete(exercise.id)}
+                        className="text-destructive"
+                      >
+                        <Trash className="w-4 h-4 mr-2" /> Excluir
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </TableCell>
               </TableRow>
             ))}
@@ -177,8 +187,29 @@ export function ExerciseTable({
         </Table>
       </div>
 
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+      <Dialog open={!!viewExercise} onOpenChange={() => setViewExercise(null)}>
         <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Detalhes do Exercício</DialogTitle>
+          </DialogHeader>
+          {viewExercise && (
+            <div className="space-y-2">
+              <div>
+                <span className="font-semibold">Nome:</span> {viewExercise.name}
+              </div>
+              <div>
+                <span className="font-semibold">Categoria:</span> {viewExercise.category}
+              </div>
+              <div>
+                <span className="font-semibold">Equipamento:</span> {viewExercise.equipment || "—"}
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
             <DialogTitle>
               {isEditing ? "Editar Exercício" : "Novo Exercício"}
@@ -272,6 +303,7 @@ export function WorkoutForm({ exercises, onSaveWorkout }: WorkoutFormProps) {
   const [workoutName, setWorkoutName] = useState("");
   const [selectedExercises, setSelectedExercises] = useState<WorkoutExercise[]>([]);
   const [currentExerciseId, setCurrentExerciseId] = useState("");
+  const [viewExercise, setViewExercise] = useState<WorkoutExercise | null>(null);
   const { toast } = useToast();
 
   const addExerciseToWorkout = () => {
@@ -348,110 +380,234 @@ export function WorkoutForm({ exercises, onSaveWorkout }: WorkoutFormProps) {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="space-y-2">
-        <Label htmlFor="workout-name">Nome do Treino</Label>
-        <Input
-          id="workout-name"
-          value={workoutName}
-          onChange={(e) => setWorkoutName(e.target.value)}
-          placeholder="Ex: Treino de Pernas"
-        />
-      </div>
-
-      <div className="space-y-2">
-        <Label>Adicionar Exercício</Label>
-        <div className="flex space-x-2">
-          <Select
-            value={currentExerciseId}
-            onValueChange={setCurrentExerciseId}
-          >
-            <SelectTrigger className="flex-1">
-              <SelectValue placeholder="Selecione um exercício" />
-            </SelectTrigger>
-            <SelectContent>
-              {exercises.map((exercise) => (
-                <SelectItem key={exercise.id} value={exercise.id}>
-                  {exercise.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Button onClick={addExerciseToWorkout}>Adicionar</Button>
+    <>
+      <div className="space-y-6">
+        <div className="space-y-2">
+          <Label htmlFor="workout-name">Nome do Treino</Label>
+          <Input
+            id="workout-name"
+            value={workoutName}
+            onChange={(e) => setWorkoutName(e.target.value)}
+            placeholder="Ex: Treino de Pernas"
+          />
         </div>
-      </div>
 
-      {selectedExercises.length > 0 && (
-        <div className="space-y-4">
-          <h3 className="font-medium text-lg">Exercícios no Treino</h3>
-          <div className="rounded-md border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Exercício</TableHead>
-                  <TableHead className="w-16">Séries</TableHead>
-                  <TableHead className="w-16">Reps</TableHead>
-                  <TableHead className="w-20">Carga (kg)</TableHead>
-                  <TableHead className="w-20">Ações</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {selectedExercises.map((ex, index) => (
-                  <TableRow key={index}>
-                    <TableCell>{ex.exerciseName}</TableCell>
-                    <TableCell>
-                      <Input
-                        type="number"
-                        min="1"
-                        className="w-14"
-                        value={ex.sets}
-                        onChange={(e) => updateExerciseDetails(index, "sets", parseInt(e.target.value) || 0)}
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <Input
-                        type="number"
-                        min="1"
-                        className="w-14"
-                        value={ex.reps}
-                        onChange={(e) => updateExerciseDetails(index, "reps", parseInt(e.target.value) || 0)}
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <Input
-                        type="number"
-                        min="0"
-                        step="0.5"
-                        className="w-16"
-                        value={ex.weight || 0}
-                        onChange={(e) => updateExerciseDetails(index, "weight", parseFloat(e.target.value) || 0)}
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="p-0 h-8 w-8"
-                        onClick={() => removeExercise(index)}
-                      >
-                        X
-                      </Button>
-                    </TableCell>
-                  </TableRow>
+        <div className="space-y-2">
+          <Label>Adicionar Exercício</Label>
+          <div className="flex space-x-2">
+            <Select
+              value={currentExerciseId}
+              onValueChange={setCurrentExerciseId}
+            >
+              <SelectTrigger className="flex-1">
+                <SelectValue placeholder="Selecione um exercício" />
+              </SelectTrigger>
+              <SelectContent>
+                {exercises.map((exercise) => (
+                  <SelectItem key={exercise.id} value={exercise.id}>
+                    {exercise.name}
+                  </SelectItem>
                 ))}
-              </TableBody>
-            </Table>
+              </SelectContent>
+            </Select>
+            <Button onClick={addExerciseToWorkout}>Adicionar</Button>
           </div>
         </div>
-      )}
 
-      <Button 
-        onClick={handleSaveWorkout} 
-        className="w-full"
-        disabled={!workoutName || selectedExercises.length === 0}
-      >
-        Salvar Treino
-      </Button>
+        {selectedExercises.length > 0 && (
+          <div className="space-y-4">
+            <h3 className="font-medium text-lg">Exercícios no Treino</h3>
+            <div className="rounded-md border overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="min-w-[200px]">Exercício</TableHead>
+                    <TableHead className="w-12 text-center">Ações</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {selectedExercises.map((ex, index) => (
+                    <TableRow key={index}>
+                      <TableCell>{ex.exerciseName}</TableCell>
+                      <TableCell className="text-center">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon">
+                              <MoreVertical className="w-5 h-5" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => setViewExercise(ex)}>
+                              <Eye className="w-4 h-4 mr-2" /> Visualizar
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => {/* editar lógica */}}>
+                              <Edit className="w-4 h-4 mr-2" /> Editar
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => removeExercise(index)}
+                              className="text-destructive"
+                            >
+                              <Trash className="w-4 h-4 mr-2" /> Excluir
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          </div>
+        )}
+
+        <Button 
+          onClick={handleSaveWorkout} 
+          className="w-full"
+          disabled={!workoutName || selectedExercises.length === 0}
+        >
+          Salvar Treino
+        </Button>
+      </div>
+
+      <Dialog open={!!viewExercise} onOpenChange={() => setViewExercise(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Detalhes do Exercício</DialogTitle>
+          </DialogHeader>
+          {viewExercise && (
+            <div className="space-y-2">
+              <div>
+                <span className="font-semibold">Nome:</span> {viewExercise.exerciseName}
+              </div>
+              <div>
+                <span className="font-semibold">Séries:</span> {viewExercise.sets}
+              </div>
+              <div>
+                <span className="font-semibold">Repetições:</span> {viewExercise.reps}
+              </div>
+              <div>
+                <span className="font-semibold">Carga:</span> {viewExercise.weight || "—"}
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+    </>
+  );
+}
+
+export interface Workout {
+  id: string;
+  name: string;
+  date: string;
+  exercises: WorkoutExercise[];
+}
+
+interface WorkoutHistoryListProps {
+  workouts: Workout[];
+  onViewWorkout: (workout: Workout) => void;
+}
+
+export function WorkoutHistoryList({ workouts, onViewWorkout }: WorkoutHistoryListProps) {
+  return (
+    <div className="rounded-md border overflow-x-auto">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead className="min-w-[200px]">Nome</TableHead>
+            <TableHead className="w-12 text-center">Ações</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {workouts.map((workout) => (
+            <TableRow key={workout.id}>
+              <TableCell className="font-medium">{workout.name}</TableCell>
+              <TableCell className="text-center">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon">
+                      <MoreVertical className="w-5 h-5" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={() => onViewWorkout(workout)}>
+                      <Eye className="w-4 h-4 mr-2" /> Visualizar
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
     </div>
+  );
+}
+
+interface WorkoutListProps {
+  workouts: Workout[];
+  onViewWorkout: (workout: Workout) => void;
+}
+
+export function WorkoutList({ workouts, onViewWorkout }: WorkoutListProps) {
+  const [viewWorkout, setViewWorkout] = useState<Workout | null>(null);
+
+  return (
+    <>
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        {workouts.map((workout) => (
+          <Card key={workout.id} className="overflow-hidden">
+            <CardHeader className="pb-2 flex flex-row justify-between items-center">
+              <div>
+                <CardTitle>{workout.name}</CardTitle>
+                {/* ... outras infos ... */}
+              </div>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon">
+                    <MoreVertical className="w-5 h-5" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => setViewWorkout(workout)}>
+                    <Eye className="w-4 h-4 mr-2" /> Visualizar
+                  </DropdownMenuItem>
+                  {/* Outras ações, se desejar */}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </CardHeader>
+            {/* ... resto do card ... */}
+          </Card>
+        ))}
+      </div>
+
+      {/* Modal de Visualização do Treino */}
+      <Dialog open={!!viewWorkout} onOpenChange={() => setViewWorkout(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Detalhes do Treino</DialogTitle>
+          </DialogHeader>
+          {viewWorkout && (
+            <div>
+              <div><b>Nome:</b> {viewWorkout.name}</div>
+              <div><b>Data:</b> {format(new Date(viewWorkout.date), "dd/MM/yyyy")}</div>
+              <div className="mt-4">
+                <b>Exercícios:</b>
+                <ul className="mt-2 space-y-2">
+                  {viewWorkout.exercises.map((ex, i) => (
+                    <li key={i} className="border rounded p-2">
+                      <div><b>Nome:</b> {ex.exerciseName}</div>
+                      <div><b>Séries:</b> {ex.sets}</div>
+                      <div><b>Repetições:</b> {ex.reps}</div>
+                      <div><b>Carga:</b> {ex.weight || "—"}</div>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
