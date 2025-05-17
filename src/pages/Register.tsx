@@ -5,37 +5,53 @@ import { KangooMascot } from "@/components/kangoo-mascot";
 import { useNavigate } from "react-router-dom";
 import InterviewFlow from "@/components/onboarding/InterviewFlow";
 
+// Tipos para registro e entrevista
+interface RegisterData {
+  name: string;
+  email: string;
+  password: string;
+}
+
+interface InterviewData {
+  mainGoal: string;
+  [key: string]: unknown; // outros campos opcionais
+}
+
+type CompleteUserData = RegisterData & InterviewData & { objective: string };
+
 const Register = () => {
   const navigate = useNavigate();
   const [showInterview, setShowInterview] = useState(false);
-  const [userData, setUserData] = useState<any>(null);
+  const [userData, setUserData] = useState<RegisterData | null>(null);
   
   useEffect(() => {
     document.title = "Cadastro | KangoFit";
   }, []);
 
-  const handleRegisterComplete = (data: any) => {
+  const handleRegisterComplete = (data: RegisterData) => {
     setUserData(data);
     setShowInterview(true);
   };
 
-  const handleInterviewComplete = (interviewData: any) => {
-    // Combinar dados do registro com dados da entrevista
-    const completeUserData = {
+  const handleInterviewComplete = (interviewData: InterviewData) => {
+    if (!userData) return;
+    const completeUserData: CompleteUserData = {
       ...userData,
       ...interviewData,
-      // Mapear mainGoal para objective com valores mais descritivos
-      objective: interviewData.mainGoal === 'loseFat' ? 'Perder gordura corporal' :
-                interviewData.mainGoal === 'gainMuscle' ? 'Ganhar massa muscular' :
-                interviewData.mainGoal === 'improveConditioning' ? 'Melhorar o condicionamento' :
-                interviewData.mainGoal === 'maintainHealth' ? 'Manutenção da saúde' :
-                'Não definido'
+      objective:
+        interviewData.mainGoal === "loseFat"
+          ? "Perder gordura corporal"
+          : interviewData.mainGoal === "gainMuscle"
+          ? "Ganhar massa muscular"
+          : interviewData.mainGoal === "improveConditioning"
+          ? "Melhorar o condicionamento"
+          : interviewData.mainGoal === "maintainHealth"
+          ? "Manutenção da saúde"
+          : "Não definido",
     };
     
-    // Salvar dados completos no localStorage
     localStorage.setItem("kangofit-profile-data", JSON.stringify(completeUserData));
     
-    // Redirecionar para o dashboard
     navigate("/dashboard");
   };
 

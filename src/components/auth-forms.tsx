@@ -7,6 +7,20 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { KangooMascot } from "@/components/kangoo-mascot";
 import { useToast } from "@/hooks/use-toast";
 
+interface RegisterData {
+  name: string;
+  email: string;
+  password: string;
+}
+
+interface InterviewData {
+  mainGoal: string;
+  /* outros campos */
+  [key: string]: any;
+}
+
+type CompleteUserData = RegisterData & InterviewData & { objective: string };
+
 export function LoginForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -98,7 +112,7 @@ export function LoginForm() {
   );
 }
 
-export function RegisterForm({ onRegisterComplete }: { onRegisterComplete: (data: any) => void }) {
+export function RegisterForm({ onRegisterComplete }: { onRegisterComplete: (data: RegisterData) => void }) {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");

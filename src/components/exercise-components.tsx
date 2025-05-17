@@ -81,9 +81,9 @@ export function ExerciseTable({
   onEditExercise,
   onDeleteExercise,
 }: ExerciseTableProps) {
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isDialogOpen, setIsDialogOpen] = useState<boolean>(false);
   const [currentExercise, setCurrentExercise] = useState<Partial<Exercise> | null>(null);
-  const [isEditing, setIsEditing] = useState(false);
+  const [isEditing, setIsEditing] = useState<boolean>(false);
   const [viewExercise, setViewExercise] = useState<Exercise | null>(null);
 
   const { toast } = useToast();
@@ -300,9 +300,9 @@ interface WorkoutFormProps {
 }
 
 export function WorkoutForm({ exercises, onSaveWorkout }: WorkoutFormProps) {
-  const [workoutName, setWorkoutName] = useState("");
+  const [workoutName, setWorkoutName] = useState<string>("");
   const [selectedExercises, setSelectedExercises] = useState<WorkoutExercise[]>([]);
-  const [currentExerciseId, setCurrentExerciseId] = useState("");
+  const [currentExerciseId, setCurrentExerciseId] = useState<string>("");
   const [viewExercise, setViewExercise] = useState<WorkoutExercise | null>(null);
   const { toast } = useToast();
 
