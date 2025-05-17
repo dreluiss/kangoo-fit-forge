@@ -6,6 +6,8 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { KangooMascot } from "@/components/kangoo-mascot";
 import { useToast } from "@/hooks/use-toast";
+import { Separator } from "@/components/ui/separator";
+import { MessageSquare } from "lucide-react";
 
 interface RegisterData {
   name: string;

@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { format } from "date-fns";
 import { pt } from "date-fns/locale";
@@ -196,25 +195,6 @@ export function WorkoutHistoryDetail({ workout, onClose, open }: WorkoutHistoryD
               </div>
             </>
           )}
-          
-          <Separator />
-          
-          <div>
-            <h3 className="font-medium text-lg mb-4 flex items-center gap-2">
-              Feedback do Kangoo
-            </h3>
-            <div className="bg-primary/5 p-4 rounded-lg flex items-start gap-4">
-              <KangooMascot className="w-12 h-12 flex-shrink-0" />
-              <div className="space-y-2">
-                <p>{getAIFeedback()}</p>
-                <p className="text-sm text-muted-foreground">Baseado no seu histórico de treinos e progresso.</p>
-              </div>
-            </div>
-          </div>
-        </div>
-        
-        <div className="flex justify-end mt-4">
-          <Button onClick={onClose}>Fechar</Button>
         </div>
       </DialogContent>
     </Dialog>
