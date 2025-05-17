@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -99,7 +98,7 @@ export function LoginForm() {
   );
 }
 
-export function RegisterForm() {
+export function RegisterForm({ onRegisterComplete }: { onRegisterComplete: (data: any) => void }) {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -115,11 +114,14 @@ export function RegisterForm() {
     setTimeout(() => {
       // Simple validation
       if (name && email && password) {
-        toast({
-          title: "Conta criada com sucesso!",
-          description: "Bem-vindo ao KangoFit! Faça login para começar.",
-        });
-        navigate("/login");
+        const userData = {
+          name,
+          email,
+          password
+        };
+        
+        console.log("Registration successful, calling onRegisterComplete");
+        onRegisterComplete(userData);
       } else {
         toast({
           title: "Erro no cadastro",

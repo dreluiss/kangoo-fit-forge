@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from "react";
 import { AppHeader } from "@/components/app-header";
 import { KangooMascot } from "@/components/kangoo-mascot";
@@ -26,6 +25,13 @@ interface ProfileData {
   height: string;
   weight: string;
   objective: string;
+  // Dados do questionário
+  experienceLevel?: string;
+  mainGoal?: string;
+  weeklyFrequency?: string;
+  sessionDuration?: string;
+  trainingLocation?: string;
+  availableEquipment?: string[];
 }
 
 const Profile = () => {
@@ -34,7 +40,9 @@ const Profile = () => {
     const savedData = localStorage.getItem("kangofit-profile-data");
     if (savedData) {
       try {
-        return JSON.parse(savedData);
+        const parsedData = JSON.parse(savedData);
+        console.log("Dados do perfil carregados:", parsedData); // Log para debug
+        return parsedData;
       } catch (error) {
         console.error("Error parsing profile data:", error);
       }
@@ -46,7 +54,7 @@ const Profile = () => {
       email: "usuario@exemplo.com",
       height: "175",
       weight: "70",
-      objective: "Ganho de massa muscular"
+      objective: "Não definido"
     };
   });
   
@@ -210,12 +218,77 @@ const Profile = () => {
               
               <div className="space-y-2 md:col-span-2">
                 <Label htmlFor="objective">Objetivo</Label>
-                <Input id="objective" value={objective} onChange={handleInputChange} />
+                <Input 
+                  id="objective" 
+                  value={objective || 'Não definido'} 
+                  onChange={handleInputChange}
+                  placeholder="Seu objetivo de treino"
+                />
               </div>
             </div>
             
             <Button type="submit">Salvar alterações</Button>
           </form>
+
+          {/* Nova seção para mostrar os dados do questionário */}
+          <Card className="mt-8">
+            <CardContent className="pt-6">
+              <h3 className="font-medium text-lg mb-4">Informações do seu perfil de treino</h3>
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="space-y-2">
+                  <Label>Nível de experiência</Label>
+                  <p className="text-muted-foreground">
+                    {profileData.experienceLevel === 'beginner' ? 'Iniciante' :
+                     profileData.experienceLevel === 'intermediate' ? 'Intermediário' :
+                     'Avançado'}
+                  </p>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label>Frequência semanal</Label>
+                  <p className="text-muted-foreground">
+                    {profileData.weeklyFrequency} treinos por semana
+                  </p>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label>Duração do treino</Label>
+                  <p className="text-muted-foreground">
+                    {profileData.sessionDuration === '20min' ? 'Até 20 minutos' :
+                     profileData.sessionDuration === '30-40min' ? '30 a 40 minutos' :
+                     '1 hora ou mais'}
+                  </p>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label>Local de treino</Label>
+                  <p className="text-muted-foreground">
+                    {profileData.trainingLocation === 'home' ? 'Em casa' :
+                     profileData.trainingLocation === 'gym' ? 'Na academia' :
+                     'Ao ar livre'}
+                  </p>
+                </div>
+                
+                <div className="space-y-2 md:col-span-2">
+                  <Label>Equipamentos disponíveis</Label>
+                  <div className="flex flex-wrap gap-2">
+                    {profileData.availableEquipment?.map((equipment, index) => (
+                      <span 
+                        key={index}
+                        className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary"
+                      >
+                        {equipment === 'none' ? 'Peso corporal' :
+                         equipment === 'dumbbells' ? 'Halteres' :
+                         equipment === 'bench' ? 'Banco' :
+                         equipment === 'bands' ? 'Elásticos' :
+                         'Esteira/bicicleta ergométrica'}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
           
           <Card className="mt-8">
             <CardContent className="pt-6">
@@ -248,34 +321,25 @@ const Profile = () => {
               {profileImage ? (
                 <AvatarImage src={profileImage} alt={name} />
               ) : (
-                <AvatarFallback className="text-4xl bg-primary/20 text-primary">
+                <AvatarFallback className="text-2xl">
                   {getInitials()}
                 </AvatarFallback>
               )}
             </Avatar>
             
-            <div className="flex flex-col gap-2 w-full">
+            <div className="flex flex-col items-center gap-2">
               <input
                 type="file"
-                accept="image/png, image/jpeg"
-                className="hidden"
                 ref={fileInputRef}
+                className="hidden"
+                accept="image/*"
                 onChange={handleFileChange}
               />
-              
-              <Button 
-                className="w-full" 
-                onClick={() => fileInputRef.current?.click()}
-              >
+              <Button onClick={() => fileInputRef.current?.click()}>
                 Escolher imagem
               </Button>
-              
               {profileImage && (
-                <Button 
-                  variant="outline" 
-                  className="w-full" 
-                  onClick={handleRemoveImage}
-                >
+                <Button variant="outline" onClick={handleRemoveImage}>
                   Remover imagem
                 </Button>
               )}
