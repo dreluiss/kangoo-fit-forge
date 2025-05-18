@@ -8,6 +8,7 @@ import { KangooMascot } from "@/components/kangoo-mascot";
 import { useToast } from "@/hooks/use-toast";
 import { Separator } from "@/components/ui/separator";
 import { MessageSquare } from "lucide-react";
+import { supabase } from "@/lib/supabase"; // ajuste o caminho conforme seu projeto
 
 interface RegisterData {
   name: string;
@@ -210,4 +211,52 @@ export function RegisterForm({ onRegisterComplete }: { onRegisterComplete: (data
       </CardFooter>
     </Card>
   );
+}
+
+export async function saveCompletedWorkout({
+  workoutId,
+  workoutName,
+  userId,
+  exercises
+}: {
+  workoutId: string;
+  workoutName: string;
+  userId: string;
+  exercises: {
+    exerciseId: string;
+    reps: number;
+    sets: number;
+    weight?: number;
+  }[];
+}) {
+  // 1. Salva o treino finalizado
+  const { data: workout, error: workoutError } = await supabase
+    .from("completed_workouts")
+    .insert([{
+      workout_id: workoutId,
+      workout_name: workoutName,
+      user_id: userId,
+      exercise_count: exercises.length
+    }])
+    .select()
+    .single();
+
+  if (workoutError) throw workoutError;
+
+  // 2. Salva os exercícios desse treino
+  const exercisesToInsert = exercises.map(ex => ({
+    completed_workout_id: workout.id,
+    exercise_id: ex.exerciseId,
+    reps_per_set: ex.reps,
+    sets: ex.sets,
+    weight: ex.weight ?? null
+  }));
+
+  const { error: exercisesError } = await supabase
+    .from("completed_workout_exercises")
+    .insert(exercisesToInsert);
+
+  if (exercisesError) throw exercisesError;
+
+  return workout;
 }

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback } from "react";
 import { 
   Dialog,
@@ -23,6 +22,7 @@ import { useToast } from "@/hooks/use-toast";
 import { WorkoutExercise } from "./exercise-components";
 import { KangooMascot } from "./kangoo-mascot";
 import { cn } from "@/lib/utils";
+import { supabase } from "@/lib/supabase";
 
 // Frases motivacionais para o Kangoo exibir durante o treino
 const motivationalPhrases = [
@@ -43,8 +43,105 @@ interface WorkoutExecutionProps {
   onOpenChange: (open: boolean) => void;
   exercises: WorkoutExercise[];
   workoutName: string;
-  onComplete: (notes: string) => void;
+  onComplete: (notes: string, n8nFeedback?: any) => void;
 }
+
+async function sendToN8n(userId: string, exercises: WorkoutExercise[]) {
+  const webhookUrl = "https://drelui.app.n8n.cloud/webhook-test/kangofit-gerar-plano";
+  const response = await fetch(webhookUrl, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      userId,
+      exercises,
+    }),
+  });
+  if (!response.ok) throw new Error("Erro ao comunicar com o n8n");
+  return response.json();
+}
+
+// Função para salvar o treino no Supabase SEM autenticação
+const saveWorkoutToSupabase = async ({
+  workoutId,
+  workoutName,
+  exercises
+}: {
+  workoutId: string;
+  workoutName: string;
+  exercises: WorkoutExercise[];
+}) => {
+  const { data: userData } = await supabase.auth.getUser();
+  const user = userData?.user;
+  if (!user) {
+    throw new Error("Usuário não autenticado");
+  }
+  const userId = user.id;
+
+  console.log({
+    workout_id: workoutId,
+    workout_name: workoutName,
+    user_id: userId,
+    exercise_count: exercises.length
+  });
+
+  // 1. Salva o treino finalizado
+  const { data, error } = await supabase
+    .from("completed_workouts")
+    .insert([{
+      workout_id: workoutId,
+      workout_name: workoutName,
+      user_id: userId,
+      exercise_count: exercises.length
+    }])
+    .select()
+    .single();
+
+  if (error) throw error;
+  if (!data) throw new Error("Erro ao salvar treino no Supabase");
+
+  // 2. Salva os exercícios desse treino
+  const exercisesToInsert = exercises.map(ex => ({
+    completed_workout_id: data.id,
+    exercise_id: ex.exerciseId,
+    reps_per_set: ex.reps,
+    sets: ex.sets,
+    weight: ex.weight ?? null
+  }));
+
+  const { error: exercisesError } = await supabase
+    .from("completed_workout_exercises")
+    .insert(exercisesToInsert);
+
+  if (exercisesError) throw exercisesError;
+
+  return data;
+};
+
+// Cadastro
+const signUp = async (email: string, password: string) => {
+  const { data, error } = await supabase.auth.signUp({
+    email,
+    password,
+  });
+  if (error) {
+    alert("Erro ao cadastrar: " + error.message);
+  } else {
+    alert("Cadastro realizado! Verifique seu e-mail.");
+  }
+};
+
+// Login
+const signIn = async (email: string, password: string) => {
+  const { data, error } = await supabase.auth.signInWithPassword({
+    email,
+    password,
+  });
+  if (error) {
+    alert("Erro ao logar: " + error.message);
+  } else {
+    alert("Login realizado!");
+  }
+};
 
 export function WorkoutExecution({
   open,
@@ -109,6 +206,14 @@ export function WorkoutExecution({
     }
   }, [open, getRandomMotivationalPhrase]);
   
+  useEffect(() => {
+    async function checkUser() {
+      const { data: { user } } = await supabase.auth.getUser();
+      console.log("Usuário autenticado Supabase:", user);
+    }
+    checkUser();
+  }, []);
+  
   const handleCompleteSet = () => {
     if (currentSet < currentExercise.sets) {
       // Ainda tem mais séries para fazer neste exercício
@@ -141,9 +246,28 @@ export function WorkoutExecution({
     setIsPaused(prev => !prev);
   };
   
-  const handleFinishWorkout = () => {
-    onComplete(notes);
-    onOpenChange(false);
+  const handleFinishWorkout = async () => {
+    try {
+      await saveWorkoutToSupabase({
+        workoutId: Math.random().toString(36).substr(2, 9),
+        workoutName,
+        exercises
+      });
+      const { data: userData } = await supabase.auth.getUser();
+      const userId = userData?.user?.id || '';
+      const n8nResponse = await sendToN8n(userId, exercises);
+
+      // Passe o feedback do n8n para o onComplete
+      onComplete(notes, n8nResponse);
+
+      onOpenChange(false);
+    } catch (err) {
+      toast({
+        title: "Erro ao comunicar com IA",
+        description: String(err),
+        variant: "destructive",
+      });
+    }
   };
   
   const formatTime = (seconds: number) => {

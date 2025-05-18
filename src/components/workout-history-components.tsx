@@ -200,3 +200,17 @@ export function WorkoutHistoryDetail({ workout, onClose, open }: WorkoutHistoryD
     </Dialog>
   );
 }
+
+async function sendToN8n(userId: string, exercises: WorkoutExercise[]) {
+  const webhookUrl = "https://drelui.app.n8n.cloud/webhook-test/kangofit-gerar-plano";
+  const response = await fetch(webhookUrl, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      userId,
+      exercises,
+    }),
+  });
+  if (!response.ok) throw new Error("Erro ao comunicar com o n8n");
+  return response.json();
+}
