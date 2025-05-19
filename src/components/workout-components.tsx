@@ -1,4 +1,3 @@
-
 import { format } from "date-fns";
 import { pt } from "date-fns/locale";
 import { Button } from "@/components/ui/button";
@@ -9,6 +8,7 @@ import { WorkoutExercise } from "./exercise-components";
 import { Badge } from "@/components/ui/badge";
 import { useState } from "react";
 import { WorkoutExecution } from "./workout-execution";
+import { KangooMascot } from "@/components/kangoo-mascot";
 
 export interface Workout {
   id: string;
@@ -18,6 +18,10 @@ export interface Workout {
   completed?: boolean;
   notes?: string;
   executionDate?: Date;
+  feedback_message?: string;
+  feedback_suggestions?: string[];
+  next_workout_focus?: string;
+  next_workout_recommendations?: string[];
 }
 
 interface WorkoutListProps {
@@ -268,22 +272,40 @@ export function WorkoutDetail({ workout, onComplete, onDelete, onBack }: Workout
       </Card>
 
       {workout.completed && (
-        <Card className="bg-primary/5 border-primary">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-lg">Treino concluído!</CardTitle>
+        <Card className="border-2 border-cyan-400 bg-blue-50 dark:bg-blue-900/20">
+          <CardHeader className="pb-2 flex flex-row items-center gap-3">
+            <KangooMascot variant="small" />
+            <div>
+              <CardTitle className="text-lg">Feedback do Agente IA</CardTitle>
+              {workout.executionDate && (
+                <p className="text-sm text-muted-foreground mt-1">
+                  Concluído em: {format(new Date(workout.executionDate), "dd/MM/yyyy 'às' HH:mm", { locale: pt })}
+                </p>
+              )}
+            </div>
           </CardHeader>
           <CardContent>
-            <p>Parabéns por concluir este treino!</p>
-            {workout.notes && (
-              <div className="mt-4 p-3 bg-background rounded-md border">
-                <p className="text-sm font-medium mb-1">Suas observações:</p>
-                <p className="text-sm text-muted-foreground">{workout.notes}</p>
+            <p className="text-base mb-2">{workout.feedback_message}</p>
+            {workout.feedback_suggestions && workout.feedback_suggestions.length > 0 && (
+              <div className="mt-3">
+                <h5 className="font-medium text-sm mb-1">Sugestões:</h5>
+                <ul className="list-disc list-inside text-sm space-y-1">
+                  {workout.feedback_suggestions.map((suggestion, index) => (
+                    <li key={index}>{suggestion}</li>
+                  ))}
+                </ul>
               </div>
             )}
-            {workout.executionDate && (
-              <p className="text-sm text-muted-foreground mt-3">
-                Concluído em: {format(new Date(workout.executionDate), "dd/MM/yyyy 'às' HH:mm", { locale: pt })}
-              </p>
+            {workout.next_workout_focus && (
+              <div className="mt-3">
+                <h5 className="font-medium text-sm mb-1">Próximo Treino:</h5>
+                <p className="text-sm mb-1">Foco: {workout.next_workout_focus}</p>
+                <ul className="list-disc list-inside text-sm space-y-1">
+                  {(workout.next_workout_recommendations || []).map((rec, index) => (
+                    <li key={index}>{rec}</li>
+                  ))}
+                </ul>
+              </div>
             )}
           </CardContent>
         </Card>

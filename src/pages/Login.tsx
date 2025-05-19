@@ -112,7 +112,9 @@ const Login = () => {
           {loading ? "Entrando..." : "Entrar"}
         </Button>
         {message && (
-          <div className="text-red-400 text-center text-sm mb-2">{message}</div>
+          <div className={`text-center text-sm mb-2 ${message.includes("realizado") ? "text-green-400" : "text-red-400"}`}>
+            {message}
+          </div>
         )}
         <div className="text-gray-400 text-sm mt-2">
           Não tem uma conta?{" "}

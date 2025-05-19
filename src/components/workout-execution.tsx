@@ -23,6 +23,7 @@ import { WorkoutExercise } from "./exercise-components";
 import { KangooMascot } from "./kangoo-mascot";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/lib/supabase";
+import { sendWorkoutMessage, WorkoutFeedback } from "@/lib/n8n-message";
 
 // Frases motivacionais para o Kangoo exibir durante o treino
 const motivationalPhrases = [
@@ -43,7 +44,7 @@ interface WorkoutExecutionProps {
   onOpenChange: (open: boolean) => void;
   exercises: WorkoutExercise[];
   workoutName: string;
-  onComplete: (notes: string, n8nFeedback?: any) => void;
+  onComplete: (notes: string, feedback: WorkoutFeedback) => void;
 }
 
 async function sendToN8n(userId: string, exercises: WorkoutExercise[]) {
@@ -57,18 +58,22 @@ async function sendToN8n(userId: string, exercises: WorkoutExercise[]) {
     }),
   });
   if (!response.ok) throw new Error("Erro ao comunicar com o n8n");
-  return response.json();
+  const text = await response.text();
+  if (!text) throw new Error("Resposta vazia do agente IA");
+  return JSON.parse(text);
 }
 
 // Função para salvar o treino no Supabase SEM autenticação
 const saveWorkoutToSupabase = async ({
   workoutId,
   workoutName,
-  exercises
+  exercises,
+  feedback
 }: {
   workoutId: string;
   workoutName: string;
   exercises: WorkoutExercise[];
+  feedback: WorkoutFeedback;
 }) => {
   const { data: userData } = await supabase.auth.getUser();
   const user = userData?.user;
@@ -77,13 +82,6 @@ const saveWorkoutToSupabase = async ({
   }
   const userId = user.id;
 
-  console.log({
-    workout_id: workoutId,
-    workout_name: workoutName,
-    user_id: userId,
-    exercise_count: exercises.length
-  });
-
   // 1. Salva o treino finalizado
   const { data, error } = await supabase
     .from("completed_workouts")
@@ -91,7 +89,11 @@ const saveWorkoutToSupabase = async ({
       workout_id: workoutId,
       workout_name: workoutName,
       user_id: userId,
-      exercise_count: exercises.length
+      exercise_count: exercises.length,
+      feedback_message: feedback.message,
+      feedback_suggestions: feedback.suggestions,
+      next_workout_focus: feedback.nextWorkout?.focus,
+      next_workout_recommendations: feedback.nextWorkout?.recommendations
     }])
     .select()
     .single();
@@ -143,6 +145,10 @@ const signIn = async (email: string, password: string) => {
   }
 };
 
+function cleanFeedbackMessage(message: string): string {
+  return message.replace(/<think>[\s\S]*?<\/think>/gi, '').trim();
+}
+
 export function WorkoutExecution({
   open,
   onOpenChange,
@@ -158,6 +164,8 @@ export function WorkoutExecution({
   const [isWorkoutComplete, setIsWorkoutComplete] = useState(false);
   const [notes, setNotes] = useState("");
   const [motivationalPhrase, setMotivationalPhrase] = useState("");
+  const [feedback, setFeedback] = useState<WorkoutFeedback | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
   
   const { toast } = useToast();
   const currentExercise = exercises[currentExerciseIndex];
@@ -248,25 +256,48 @@ export function WorkoutExecution({
   
   const handleFinishWorkout = async () => {
     try {
-      await saveWorkoutToSupabase({
-        workoutId: Math.random().toString(36).substr(2, 9),
-        workoutName,
-        exercises
-      });
+      setIsLoading(true);
       const { data: userData } = await supabase.auth.getUser();
-      const userId = userData?.user?.id || '';
-      const n8nResponse = await sendToN8n(userId, exercises);
+      const user = userData?.user;
+      if (!user) throw new Error("Usuário não autenticado");
 
-      // Passe o feedback do n8n para o onComplete
-      onComplete(notes, n8nResponse);
+      const message = {
+        type: 'workout_completed' as const,
+        data: {
+          userId: user.id,
+          userName: user.email || 'Usuário',
+          workoutId: Math.random().toString(36).substr(2, 9),
+          workoutName,
+          exercises,
+          completedAt: new Date().toISOString(),
+        }
+      };
 
-      onOpenChange(false);
+      const n8nFeedback = await sendWorkoutMessage(message);
+      n8nFeedback.message = cleanFeedbackMessage(n8nFeedback.message);
+      setFeedback(n8nFeedback);
+
+      await saveWorkoutToSupabase({
+        workoutId: message.data.workoutId,
+        workoutName,
+        exercises,
+        feedback: n8nFeedback
+      });
+
+      setIsWorkoutComplete(true);
+      toast({
+        title: "Feedback recebido!",
+        description: "Seu treino foi analisado com sucesso.",
+      });
+
     } catch (err) {
       toast({
         title: "Erro ao comunicar com IA",
         description: String(err),
         variant: "destructive",
       });
+    } finally {
+      setIsLoading(false);
     }
   };
   
@@ -277,33 +308,58 @@ export function WorkoutExecution({
   };
   
   const renderExerciseContent = () => {
-    if (isWorkoutComplete) {
+    // Exibe feedback do agente após finalizar
+    if (isWorkoutComplete && feedback) {
       return (
         <div className="flex flex-col gap-6">
           <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded-lg text-center">
             <h3 className="font-semibold text-lg mb-2">Treino Concluído! 🎉</h3>
-            <p>Você completou todos os exercícios do treino.</p>
+            <p>Parabéns por concluir este treino!</p>
           </div>
-          
-          <div className="flex justify-center mb-4">
-            <KangooMascot message="Excelente trabalho! Seu comprometimento é inspirador. Como foi seu treino hoje?" />
+          <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
+            <h4 className="font-semibold mb-2">Feedback do Agente IA</h4>
+            <p className="text-sm mb-2">{feedback.message}</p>
+            {feedback.suggestions && feedback.suggestions.length > 0 && (
+              <div className="mt-3">
+                <h5 className="font-medium text-sm mb-1">Sugestões:</h5>
+                <ul className="list-disc list-inside text-sm space-y-1">
+                  {feedback.suggestions.map((suggestion, index) => (
+                    <li key={index}>{suggestion}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            {feedback.nextWorkout && (
+              <div className="mt-3">
+                <h5 className="font-medium text-sm mb-1">Próximo Treino:</h5>
+                <p className="text-sm mb-1">Foco: {feedback.nextWorkout.focus}</p>
+                <ul className="list-disc list-inside text-sm space-y-1">
+                  {feedback.nextWorkout.recommendations.map((rec, index) => (
+                    <li key={index}>{rec}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
           </div>
-          
-          <div className="space-y-2">
-            <label htmlFor="notes" className="text-sm font-medium">
-              Observações sobre o treino
-            </label>
-            <Textarea
-              id="notes"
-              value={notes}
-              onChange={e => setNotes(e.target.value)}
-              placeholder="Como você se sentiu? Precisou ajustar as cargas? Teve dificuldades?"
-              className="h-32"
-            />
+        </div>
+      );
+    }
+
+    // Exibe botão "Finalizar Treino" apenas quando todos os exercícios foram feitos
+    if (isWorkoutComplete && !feedback) {
+      return (
+        <div className="flex flex-col gap-6">
+          <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded-lg text-center">
+            <h3 className="font-semibold text-lg mb-2">Treino Concluído! 🎉</h3>
+            <p>Parabéns por concluir todo o treino!</p>
           </div>
-          
-          <Button onClick={handleFinishWorkout} size="lg" className="w-full">
-            Finalizar e Salvar Treino <Flag className="ml-2" />
+          <Button
+            onClick={handleFinishWorkout}
+            size="lg"
+            className="w-full"
+            disabled={isLoading}
+          >
+            {isLoading ? "Processando feedback..." : "Finalizar Treino"}
           </Button>
         </div>
       );
@@ -391,18 +447,6 @@ export function WorkoutExecution({
               ) : (
                 <>Concluir Exercício <Check className="ml-2" /></>
               )}
-            </Button>
-          </div>
-        )}
-        
-        {!isResting && (
-          <div className="pt-4 border-t">
-            <Button 
-              variant="outline" 
-              className="w-full" 
-              onClick={() => setIsWorkoutComplete(true)}
-            >
-              Finalizar Treino <Flag className="ml-2" />
             </Button>
           </div>
         )}
