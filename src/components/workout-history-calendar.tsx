@@ -1,4 +1,3 @@
-
 import { useState, useMemo } from "react";
 import { format, isSameDay, isValid } from "date-fns";
 import { pt } from "date-fns/locale";
@@ -21,8 +20,8 @@ export function WorkoutHistoryCalendar({ workouts }: WorkoutHistoryCalendarProps
   // Filter completed workouts with valid execution dates
   const completedWorkouts = workouts.filter(workout => 
     workout.completed && 
-    workout.executionDate && 
-    isValid(new Date(workout.executionDate))
+    workout.executiondate && 
+    isValid(new Date(workout.executiondate))
   );
   
   // Create a map of dates with workouts for rendering calendar dots
@@ -30,8 +29,8 @@ export function WorkoutHistoryCalendar({ workouts }: WorkoutHistoryCalendarProps
     const dateMap: Record<string, Workout[]> = {};
     
     completedWorkouts.forEach(workout => {
-      if (workout.executionDate) {
-        const dateKey = format(new Date(workout.executionDate), "yyyy-MM-dd");
+      if (workout.executiondate) {
+        const dateKey = format(new Date(workout.executiondate), "yyyy-MM-dd");
         if (!dateMap[dateKey]) {
           dateMap[dateKey] = [];
         }
@@ -47,8 +46,8 @@ export function WorkoutHistoryCalendar({ workouts }: WorkoutHistoryCalendarProps
     if (!selectedDate) return [];
     
     return completedWorkouts.filter(workout => {
-      if (!workout.executionDate) return false;
-      const executionDate = new Date(workout.executionDate);
+      if (!workout.executiondate) return false;
+      const executionDate = new Date(workout.executiondate);
       return isSameDay(executionDate, selectedDate);
     });
   }, [selectedDate, completedWorkouts]);
@@ -116,8 +115,8 @@ export function WorkoutHistoryCalendar({ workouts }: WorkoutHistoryCalendarProps
                       <div>
                         <h4 className="font-medium">{workout.name}</h4>
                         <p className="text-sm text-muted-foreground">
-                          {workout.executionDate 
-                            ? format(new Date(workout.executionDate), "HH:mm", { locale: pt }) 
+                          {workout.executiondate 
+                            ? format(new Date(workout.executiondate), "HH:mm", { locale: pt }) 
                             : "Horário não registrado"}
                         </p>
                       </div>

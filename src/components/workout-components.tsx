@@ -9,6 +9,8 @@ import { Badge } from "@/components/ui/badge";
 import { useState } from "react";
 import { WorkoutExecution } from "./workout-execution";
 import { KangooMascot } from "@/components/kangoo-mascot";
+import { supabase } from "@/lib/supabase";
+import { sendWorkoutMessage } from "@/lib/n8n-message";
 
 export interface Workout {
   id: string;
@@ -18,6 +20,7 @@ export interface Workout {
   completed?: boolean;
   notes?: string;
   executionDate?: Date;
+  executiondate?: Date;
   feedback_message?: string;
   feedback_suggestions?: string[];
   next_workout_focus?: string;
@@ -31,6 +34,7 @@ interface WorkoutListProps {
 }
 
 export function WorkoutList({ workouts, onViewWorkout, onCreateWorkout }: WorkoutListProps) {
+  console.log("workouts recebidos na Dashboard:", workouts);
   // Ensure all workout dates are Date objects before sorting
   const sortedWorkouts = [...workouts]
     .map(workout => ({
@@ -66,6 +70,14 @@ export function WorkoutList({ workouts, onViewWorkout, onCreateWorkout }: Workou
                       <CalendarIcon className="mr-1 h-3 w-3" />
                       {format(new Date(workout.date), "dd 'de' MMMM", { locale: pt })}
                     </CardDescription>
+                    {workout.feedback_message && (
+                      <div className="mt-2 border-2 border-cyan-400 bg-blue-50 dark:bg-blue-900/20 rounded-lg p-2 flex items-start gap-2">
+                        <KangooMascot variant="small" />
+                        <span className="text-sm font-medium text-blue-900 dark:text-blue-100">
+                          {workout.feedback_message}
+                        </span>
+                      </div>
+                    )}
                   </div>
                   {workout.completed && (
                     <Badge variant="secondary">Concluído</Badge>
@@ -185,13 +197,40 @@ interface WorkoutDetailProps {
 
 export function WorkoutDetail({ workout, onComplete, onDelete, onBack }: WorkoutDetailProps) {
   const [isExecutionModalOpen, setIsExecutionModalOpen] = useState(false);
-  
+  console.log("WorkoutDetail", workout)
   // Ensure the workout date is a Date object
   const workoutDate = workout.date instanceof Date ? workout.date : new Date(workout.date);
   const totalSets = workout.exercises.reduce((acc, ex) => acc + ex.sets, 0);
   const estimatedTime = totalSets * 2; // Estimativa simplificada: 2 minutos por série
 
-  const handleExecutionComplete = (notes: string) => {
+  const handleExecutionComplete = async (notes: string) => {
+    const { data: userData } = await supabase.auth.getUser();
+    const user = userData?.user;
+    if (!user) throw new Error("Usuário não autenticado");
+
+    // Busque o nome do usuário
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('name')
+      .eq('user_id', user.id)
+      .single();
+    const userName = profile?.name || user.email || 'Usuário';
+
+    // Monte o JSON para o n8n
+    const message = {
+      type: 'workout_completed' as const,
+      data: {
+        userId: user.id,
+        userName, // agora é o nome real, não o e-mail
+        workoutId: workout.id,
+        workoutName: workout.name,
+        exercises: workout.exercises,
+        completedAt: new Date().toISOString(),
+      }
+    };
+
+    const n8nFeedback = await sendWorkoutMessage(message);
+
     onComplete(workout.id, notes);
   };
 
@@ -321,4 +360,10 @@ export function WorkoutDetail({ workout, onComplete, onDelete, onBack }: Workout
     </div>
   );
 }
+
+const { data, error } = await supabase
+  .from('completed_workouts')
+  .select('id, name, exercises, date, completed, feedback_message');
+
+console.log("Dados recebidos do Supabase:", data, error);
 

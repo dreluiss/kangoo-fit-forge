@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { AppHeader } from "@/components/app-header";
@@ -10,6 +9,8 @@ import {
   defaultExercises 
 } from "@/components/exercise-components";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/lib/supabase";
+import { sendWorkoutMessage } from "@/lib/n8n-message";
 
 const CreateWorkout = () => {
   const [exercises, setExercises] = useState<Exercise[]>(() => {
@@ -24,29 +25,53 @@ const CreateWorkout = () => {
     document.title = "Novo Treino | KangoFit";
   }, []);
   
-  const handleSaveWorkout = (name: string, workoutExercises: WorkoutExercise[]) => {
-    // Obter treinos existentes do localStorage
-    const workoutsJSON = localStorage.getItem("kangofit-workouts");
-    const existingWorkouts = workoutsJSON ? JSON.parse(workoutsJSON) : [];
-    
-    // Criar novo treino
-    const newWorkout = {
-      id: Math.random().toString(36).substr(2, 9),
-      name,
-      exercises: workoutExercises,
-      date: new Date(),
-    };
-    
-    // Adicionar à lista e salvar
-    const updatedWorkouts = [...existingWorkouts, newWorkout];
-    localStorage.setItem("kangofit-workouts", JSON.stringify(updatedWorkouts));
-    
-    toast({
-      title: "Treino criado com sucesso!",
-      description: `O treino "${name}" foi adicionado à sua lista.`,
-    });
-    
-    navigate("/workouts");
+  const handleSaveWorkout = async (name: string, workoutExercises: WorkoutExercise[]) => {
+    // Buscar usuário autenticado
+    const { data: userData } = await supabase.auth.getUser();
+    const user = userData?.user;
+    if (!user) {
+      toast({
+        title: "Erro ao criar treino!",
+        description: "Usuário não autenticado.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      // 1. Cria o treino no Supabase
+      const { data, error } = await supabase
+        .from("completed_workouts")
+        .insert([{
+          workout_id: crypto.randomUUID(),
+          workout_name: name,
+          exercises: workoutExercises,
+          date: new Date().toISOString(),
+          user_id: user.id,
+          completed: false,
+          exercise_count: workoutExercises.length
+        }])
+        .select()
+        .single();
+
+      if (error || !data) {
+        throw new Error(error?.message || "Erro ao criar treino");
+      }
+
+      toast({
+        title: "Treino criado!",
+        description: "Seu treino foi salvo com sucesso.",
+      });
+
+      navigate("/workouts");
+    } catch (err) {
+      console.error("Erro ao criar treino:", err);
+      toast({
+        title: "Erro ao criar treino!",
+        description: String(err),
+        variant: "destructive"
+      });
+    }
   };
   
   return (

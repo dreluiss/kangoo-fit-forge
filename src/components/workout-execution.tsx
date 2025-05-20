@@ -82,14 +82,15 @@ const saveWorkoutToSupabase = async ({
   }
   const userId = user.id;
 
-  // 1. Salva o treino finalizado
+  // Salva o treino finalizado
   const { data, error } = await supabase
     .from("completed_workouts")
     .insert([{
-      workout_id: workoutId,
-      workout_name: workoutName,
+      id: workoutId,
+      name: workoutName,
+      exercises: exercises,
+      date: new Date().toISOString(),
       user_id: userId,
-      exercise_count: exercises.length,
       feedback_message: feedback.message,
       feedback_suggestions: feedback.suggestions,
       next_workout_focus: feedback.nextWorkout?.focus,
@@ -101,20 +102,8 @@ const saveWorkoutToSupabase = async ({
   if (error) throw error;
   if (!data) throw new Error("Erro ao salvar treino no Supabase");
 
-  // 2. Salva os exercícios desse treino
-  const exercisesToInsert = exercises.map(ex => ({
-    completed_workout_id: data.id,
-    exercise_id: ex.exerciseId,
-    reps_per_set: ex.reps,
-    sets: ex.sets,
-    weight: ex.weight ?? null
-  }));
-
-  const { error: exercisesError } = await supabase
-    .from("completed_workout_exercises")
-    .insert(exercisesToInsert);
-
-  if (exercisesError) throw exercisesError;
+  // Salva os exercícios desse treino (se necessário)
+  // ...
 
   return data;
 };
@@ -261,28 +250,49 @@ export function WorkoutExecution({
       const user = userData?.user;
       if (!user) throw new Error("Usuário não autenticado");
 
+      const workoutId = crypto.randomUUID();
       const message = {
         type: 'workout_completed' as const,
         data: {
           userId: user.id,
           userName: user.email || 'Usuário',
-          workoutId: Math.random().toString(36).substr(2, 9),
+          workoutId,
           workoutName,
           exercises,
           completedAt: new Date().toISOString(),
         }
       };
 
+      // Send workout to n8n for feedback
       const n8nFeedback = await sendWorkoutMessage(message);
+      if (!n8nFeedback) {
+        throw new Error("Não foi possível obter feedback do treino");
+      }
+
+      // Clean and format feedback
       n8nFeedback.message = cleanFeedbackMessage(n8nFeedback.message);
       setFeedback(n8nFeedback);
 
-      await saveWorkoutToSupabase({
-        workoutId: message.data.workoutId,
-        workoutName,
-        exercises,
-        feedback: n8nFeedback
-      });
+      // Save workout to Supabase
+      const { error: saveError } = await supabase
+        .from("completed_workouts")
+        .insert([{
+          workout_id: workoutId,
+          workout_name: workoutName || 'Treino sem nome',
+          exercises: exercises,
+          exercise_count: exercises.length,
+          date: new Date().toISOString(),
+          user_id: user.id,
+          completed: true,
+          feedback_message: n8nFeedback.message,
+          feedback_suggestions: n8nFeedback.suggestions,
+          next_workout_focus: n8nFeedback.nextWorkout?.focus,
+          next_workout_recommendations: n8nFeedback.nextWorkout?.recommendations
+        }]);
+
+      if (saveError) {
+        throw new Error(`Erro ao salvar treino: ${saveError.message}`);
+      }
 
       setIsWorkoutComplete(true);
       toast({
@@ -291,8 +301,9 @@ export function WorkoutExecution({
       });
 
     } catch (err) {
+      console.error("Erro ao finalizar treino:", err);
       toast({
-        title: "Erro ao comunicar com IA",
+        title: "Erro ao finalizar treino",
         description: String(err),
         variant: "destructive",
       });

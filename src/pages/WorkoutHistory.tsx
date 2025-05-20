@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { AppHeader } from "@/components/app-header";
 import { Workout } from "@/components/workout-components";
@@ -6,31 +5,64 @@ import { WorkoutHistoryList } from "@/components/workout-history-components";
 import { WorkoutHistoryCalendar } from "@/components/workout-history-calendar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Calendar, List } from "lucide-react";
+import { supabase } from "@/lib/supabase";
 
 const WorkoutHistory = () => {
-  const [workouts, setWorkouts] = useState<Workout[]>(() => {
-    const saved = localStorage.getItem("kangofit-workouts");
-    if (!saved) return [];
-    
-    // Parse workouts and convert date strings back to Date objects
-    try {
-      const parsedWorkouts = JSON.parse(saved);
-      return parsedWorkouts
-        .filter((workout: any) => workout.completed) // Only show completed workouts
-        .map((workout: any) => ({
-          ...workout,
-          date: new Date(workout.date),
-          executionDate: workout.executionDate ? new Date(workout.executionDate) : undefined
+  const [workouts, setWorkouts] = useState<Workout[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchWorkouts = async () => {
+      setLoading(true);
+      try {
+        const { data, error } = await supabase
+          .from("completed_workouts")
+          .select("*")
+          .order('executionDate', { ascending: false });
+
+        if (error) {
+          console.error("Erro ao buscar histórico:", error);
+          setWorkouts([]);
+          return;
+        }
+
+        if (!data) {
+          setWorkouts([]);
+          return;
+        }
+
+        const formattedWorkouts = data.map((w: any) => ({
+          id: w.workout_id || w.id,
+          name: w.workout_name || w.name,
+          exercises: w.exercises || [],
+          date: w.date ? new Date(w.date) : new Date(),
+          completed: w.completed || false,
+          notes: w.notes,
+          executionDate: w.executiondate ? new Date(w.executiondate) : undefined,
+          feedback_message: w.feedback_message,
+          feedback_suggestions: w.feedback_suggestions,
+          next_workout_focus: w.next_workout_focus,
+          next_workout_recommendations: w.next_workout_recommendations
         }));
-    } catch (error) {
-      console.error("Error parsing workouts from localStorage:", error);
-      return [];
-    }
-  });
-  
+
+        setWorkouts(formattedWorkouts);
+      } catch (err) {
+        console.error("Erro ao buscar histórico:", err);
+        setWorkouts([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchWorkouts();
+  }, []);
+
   useEffect(() => {
     document.title = "Histórico de Treinos | KangoFit";
   }, []);
+
+  if (loading) {
+    return <div>Carregando histórico...</div>;
+  }
 
   return (
     <div className="flex flex-col min-h-screen">

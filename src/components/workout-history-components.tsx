@@ -10,6 +10,7 @@ import { Separator } from "@/components/ui/separator";
 import { Clock, Dumbbell, Calendar as CalendarIcon, ArrowRight, MessageSquare, CheckCircle } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { KangooMascot } from "@/components/kangoo-mascot";
+import { supabase } from "@/lib/supabase";
 
 interface WorkoutHistoryListProps {
   workouts: Workout[];
@@ -20,10 +21,10 @@ export function WorkoutHistoryList({ workouts }: WorkoutHistoryListProps) {
   
   // Sort workouts by execution date (most recent first)
   const sortedWorkouts = [...workouts]
-    .filter(workout => workout.completed && workout.executionDate)
+    .filter(workout => workout.completed && workout.executiondate)
     .sort((a, b) => {
-      const dateA = a.executionDate ? new Date(a.executionDate).getTime() : 0;
-      const dateB = b.executionDate ? new Date(b.executionDate).getTime() : 0;
+      const dateA = workout.executiondate ? new Date(workout.executiondate).getTime() : 0;
+      const dateB = workout.executiondate ? new Date(workout.executiondate).getTime() : 0;
       return dateB - dateA;
     });
 
@@ -59,8 +60,8 @@ export function WorkoutHistoryList({ workouts }: WorkoutHistoryListProps) {
                   <CardTitle>{workout.name}</CardTitle>
                   <CardDescription className="flex items-center mt-1">
                     <CalendarIcon className="mr-1 h-3 w-3" />
-                    {workout.executionDate ? 
-                      format(new Date(workout.executionDate), "dd 'de' MMMM, yyyy", { locale: pt }) :
+                    {workout.executiondate ? 
+                      format(new Date(workout.executiondate), "dd 'de' MMMM, yyyy", { locale: pt }) :
                       format(new Date(workout.date), "dd 'de' MMMM, yyyy", { locale: pt })}
                   </CardDescription>
                 </div>
@@ -119,7 +120,7 @@ interface WorkoutHistoryDetailProps {
 
 export function WorkoutHistoryDetail({ workout, onClose, open }: WorkoutHistoryDetailProps) {
   if (!workout) return null;
-  
+  console.log("WorkoutHistoryDetail", workout)
   // Calculate workout duration in minutes (mock for now)
   const workoutDuration = workout.exercises.reduce((total, ex) => total + (ex.sets * 2), 0);
   
@@ -135,6 +136,16 @@ export function WorkoutHistoryDetail({ workout, onClose, open }: WorkoutHistoryD
     return feedbacks[Math.floor(Math.random() * feedbacks.length)];
   };
   
+  const fetchUpdatedWorkout = async () => {
+    const { data: updatedWorkout } = await supabase
+      .from('completed_workouts')
+      .select('*')
+      .eq('id', workout.id)
+      .single();
+    // Use updatedWorkout to update the state
+    // This is a placeholder and should be replaced with actual state update logic
+  };
+
   return (
     <Dialog open={open} onOpenChange={(isOpen) => !isOpen && onClose()}>
       <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
@@ -146,8 +157,8 @@ export function WorkoutHistoryDetail({ workout, onClose, open }: WorkoutHistoryD
           <div className="flex flex-wrap gap-4 text-sm">
             <div className="flex items-center gap-1 bg-muted px-2 py-1 rounded-md">
               <CalendarIcon className="h-4 w-4 text-muted-foreground" />
-              <span>{workout.executionDate ? 
-                format(new Date(workout.executionDate), "dd/MM/yyyy 'às' HH:mm", { locale: pt }) :
+              <span>{workout.executiondate ? 
+                format(new Date(workout.executiondate), "dd/MM/yyyy 'às' HH:mm", { locale: pt }) :
                 "Data não registrada"}</span>
             </div>
             <div className="flex items-center gap-1 bg-muted px-2 py-1 rounded-md">
