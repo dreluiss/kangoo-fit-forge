@@ -141,8 +141,6 @@ export function WorkoutHistoryDetail({ workout, onClose, open }: WorkoutHistoryD
       .select('*')
       .eq('id', workout.id)
       .single();
-    // Use updatedWorkout to update the state
-    // This is a placeholder and should be replaced with actual state update logic
   };
 
   return (
