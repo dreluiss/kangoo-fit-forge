@@ -197,7 +197,6 @@ interface WorkoutDetailProps {
 
 export function WorkoutDetail({ workout, onComplete, onDelete, onBack }: WorkoutDetailProps) {
   const [isExecutionModalOpen, setIsExecutionModalOpen] = useState(false);
-  console.log("WorkoutDetail", workout)
   // Ensure the workout date is a Date object
   const workoutDate = workout.date instanceof Date ? workout.date : new Date(workout.date);
   const totalSets = workout.exercises.reduce((acc, ex) => acc + ex.sets, 0);

@@ -120,7 +120,6 @@ interface WorkoutHistoryDetailProps {
 
 export function WorkoutHistoryDetail({ workout, onClose, open }: WorkoutHistoryDetailProps) {
   if (!workout) return null;
-  console.log("WorkoutHistoryDetail", workout)
   // Calculate workout duration in minutes (mock for now)
   const workoutDuration = workout.exercises.reduce((total, ex) => total + (ex.sets * 2), 0);
   

@@ -43,22 +43,18 @@ export const sendWorkoutMessage = async (message: WorkoutMessage): Promise<Worko
     }
     
     const text = await response.text();
-    console.log("Resposta bruta do n8n:", text);
 
     if (!text) throw new Error("Resposta vazia do agente IA");
 
     let json;
     try {
       json = JSON.parse(text);
-      console.log("Resposta JSON do n8n:", json);
     } catch (e) {
-      console.error("Erro ao fazer parse do JSON:", e);
       throw new Error("Resposta do agente IA não é um JSON válido: " + text);
     }
 
     return json;
   } catch (error) {
-    console.error('Erro ao enviar mensagem:', error);
     throw error;
   }
 };

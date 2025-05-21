@@ -104,10 +104,6 @@ const Dashboard = () => {
     fetchUltimoFeedback();
   }, []);
 
-  useEffect(() => {
-    console.log("Ultimo feedback:", ultimoFeedback);
-  }, [ultimoFeedback]);
-
   // Estatísticas
   const totalTreinos = workouts.length;
   const totalMinutos = workouts.reduce((acc, w) => {
