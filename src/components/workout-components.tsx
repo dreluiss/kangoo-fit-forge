@@ -359,9 +359,3 @@ export function WorkoutDetail({ workout, onComplete, onDelete, onBack }: Workout
   );
 }
 
-const { data, error } = await supabase
-  .from('completed_workouts')
-  .select('id, name, exercises, date, completed, feedback_message');
-
-console.log("Dados recebidos do Supabase:", data, error);
-
