@@ -21,6 +21,15 @@ interface CompletedWorkout {
   next_workout_recommendations: string[] | null;
 }
 
+interface WorkoutHistoryRecord {
+  id: string;
+  workout_name: string;
+  executed_at: string;
+  exercises: WorkoutExercise[];
+  notes: string | null;
+  feedback: string | null;
+}
+
 const WorkoutHistory = () => {
   const [workouts, setWorkouts] = useState<Workout[]>([]);
   const [loading, setLoading] = useState(true);
@@ -53,7 +62,7 @@ const WorkoutHistory = () => {
           return;
         }
 
-        const formattedWorkouts = data.map((w: any) => ({
+        const formattedWorkouts = (data as WorkoutHistoryRecord[]).map((w) => ({
           id: w.id,
           name: w.workout_name || 'Treino',
           exercises: w.exercises || [],

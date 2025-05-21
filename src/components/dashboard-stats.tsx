@@ -1,4 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { WorkoutExercise } from "@/components/workout-components";
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip } from "recharts";
 
 interface StatsCardProps {
@@ -64,14 +65,10 @@ export function WorkoutChart({ data }: { data: { name: string; tempo: number }[]
   );
 }
 
-interface Exercise {
-  // Add appropriate properties for Exercise type
-}
-
 interface UpcomingWorkout {
   workout_name: string;
   date?: string;
-  exercises?: Exercise[];
+  exercises?: WorkoutExercise[];
 }
 
 export function UpcomingWorkoutsCard({ workouts = [] }: { workouts: UpcomingWorkout[] }) {
