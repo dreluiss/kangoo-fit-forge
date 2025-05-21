@@ -1,11 +1,25 @@
 import { useState, useEffect } from "react";
 import { AppHeader } from "@/components/app-header";
-import { Workout } from "@/components/workout-components";
+import { Workout, WorkoutExercise } from "@/components/workout-components";
 import { WorkoutHistoryList } from "@/components/workout-history-components";
 import { WorkoutHistoryCalendar } from "@/components/workout-history-calendar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Calendar, List } from "lucide-react";
 import { supabase } from "@/lib/supabase";
+
+interface CompletedWorkout {
+  workout_id: string;
+  workout_name: string;
+  exercises: WorkoutExercise[];
+  date: string;
+  completed: boolean;
+  notes: string | null;
+  executiondate: string | null;
+  feedback_message: string | null;
+  feedback_suggestions: string[] | null;
+  next_workout_focus: string | null;
+  next_workout_recommendations: string[] | null;
+}
 
 const WorkoutHistory = () => {
   const [workouts, setWorkouts] = useState<Workout[]>([]);
@@ -15,10 +29,18 @@ const WorkoutHistory = () => {
     const fetchWorkouts = async () => {
       setLoading(true);
       try {
+        const { data: userData } = await supabase.auth.getUser();
+        const user = userData?.user;
+        if (!user) {
+          setWorkouts([]);
+          setLoading(false);
+          return;
+        }
         const { data, error } = await supabase
-          .from("completed_workouts")
+          .from("workout_history")
           .select("*")
-          .order('executionDate', { ascending: false });
+          .eq("user_id", user.id)
+          .order('executed_at', { ascending: false });
 
         if (error) {
           console.error("Erro ao buscar histórico:", error);
@@ -32,19 +54,20 @@ const WorkoutHistory = () => {
         }
 
         const formattedWorkouts = data.map((w: any) => ({
-          id: w.workout_id || w.id,
-          name: w.workout_name || w.name,
+          id: w.id,
+          name: w.workout_name || 'Treino',
           exercises: w.exercises || [],
-          date: w.date ? new Date(w.date) : new Date(),
-          completed: w.completed || false,
+          date: w.executed_at ? new Date(w.executed_at) : new Date(),
+          completed: true,
           notes: w.notes,
-          executionDate: w.executiondate ? new Date(w.executiondate) : undefined,
-          feedback_message: w.feedback_message,
-          feedback_suggestions: w.feedback_suggestions,
-          next_workout_focus: w.next_workout_focus,
-          next_workout_recommendations: w.next_workout_recommendations
+          executionDate: w.executed_at ? new Date(w.executed_at) : undefined,
+          executiondate: w.executed_at ? new Date(w.executed_at) : undefined,
+          feedback_message: w.feedback,
+          feedback_suggestions: [],
+          next_workout_focus: undefined,
+          next_workout_recommendations: []
         }));
-
+        console.log('Histórico carregado:', formattedWorkouts);
         setWorkouts(formattedWorkouts);
       } catch (err) {
         console.error("Erro ao buscar histórico:", err);

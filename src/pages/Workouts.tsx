@@ -1,11 +1,25 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { AppHeader } from "@/components/app-header";
-import { WorkoutList, WorkoutDetail, Workout } from "@/components/workout-components";
+import { WorkoutList, WorkoutDetail, Workout, WorkoutExercise } from "@/components/workout-components";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/lib/supabase";
 import { sendWorkoutMessage, type WorkoutFeedback, type WorkoutMessage } from "@/lib/n8n-message";
+
+interface CompletedWorkout {
+  workout_id: string;
+  workout_name: string;
+  exercises: WorkoutExercise[];
+  date: string;
+  completed: boolean;
+  notes: string | null;
+  executiondate: string | null;
+  feedback_message: string | null;
+  feedback_suggestions: string[] | null;
+  next_workout_focus: string | null;
+  next_workout_recommendations: string[] | null;
+}
 
 // Mock de dados para treinos
 const initialWorkouts: Workout[] = [
@@ -58,9 +72,9 @@ const Workouts = () => {
         return;
       }
 
-      const formattedWorkouts = data.map((w: any) => ({
-        id: w.workout_id || w.id,
-        name: w.workout_name || w.name,
+      const formattedWorkouts = data.map((w: CompletedWorkout) => ({
+        id: w.workout_id,
+        name: w.workout_name || 'Treino',
         exercises: w.exercises || [],
         date: w.date ? new Date(w.date) : new Date(),
         completed: w.completed || false,
@@ -143,12 +157,14 @@ const Workouts = () => {
       n8nFeedback = null;
     }
 
+    const currentDate = new Date().toISOString();
+
     // 4. Atualizar o treino no Supabase com feedback
     const { error } = await supabase
       .from("completed_workouts")
       .update({
         completed: true,
-        executiondate: new Date().toISOString(),
+        executiondate: currentDate,
         notes: notes || null,
         feedback_message: n8nFeedback?.message || null,
         feedback_suggestions: n8nFeedback?.suggestions || null,
@@ -166,6 +182,24 @@ const Workouts = () => {
       return;
     }
 
+    // 5. Inserir no histórico
+    const { error: historyError } = await supabase
+      .from("workout_history")
+      .insert([
+        {
+          user_id: workout.user_id,
+          workout_id: workout.workout_id,
+          workout_name: workout.workout_name || 'Treino',
+          executed_at: currentDate,
+          exercises: workout.exercises,
+          notes: notes || null,
+          feedback: n8nFeedback?.message || null
+        }
+      ]);
+    if (historyError) {
+      console.error("Erro ao salvar histórico do treino:", historyError);
+    }
+
     await fetchWorkouts();
     toast({
       title: "Treino concluído!",
@@ -173,14 +207,32 @@ const Workouts = () => {
     });
   };
   
-  const handleDeleteWorkout = (workoutId: string) => {
-    setWorkouts(prev => prev.filter(w => w.id !== workoutId));
-    navigate("/workouts");
-    
-    toast({
-      title: "Treino excluído",
-      description: "O treino foi removido com sucesso.",
-    });
+  const handleDeleteWorkout = async (workoutId: string) => {
+    try {
+      const { error } = await supabase
+        .from("completed_workouts")
+        .delete()
+        .eq("workout_id", workoutId);
+
+      if (error) {
+        throw error;
+      }
+
+      setWorkouts(prev => prev.filter(w => w.id !== workoutId));
+      navigate("/workouts");
+      
+      toast({
+        title: "Treino excluído",
+        description: "O treino foi removido com sucesso.",
+      });
+    } catch (err) {
+      console.error("Erro ao excluir treino:", err);
+      toast({
+        title: "Erro ao excluir treino",
+        description: "Não foi possível excluir o treino. Tente novamente.",
+        variant: "destructive"
+      });
+    }
   };
 
   // Se temos um ID de treino, mostrar os detalhes daquele treino

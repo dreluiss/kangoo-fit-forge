@@ -23,8 +23,8 @@ export function WorkoutHistoryList({ workouts }: WorkoutHistoryListProps) {
   const sortedWorkouts = [...workouts]
     .filter(workout => workout.completed && workout.executiondate)
     .sort((a, b) => {
-      const dateA = workout.executiondate ? new Date(workout.executiondate).getTime() : 0;
-      const dateB = workout.executiondate ? new Date(workout.executiondate).getTime() : 0;
+      const dateA = a.executiondate ? new Date(a.executiondate).getTime() : 0;
+      const dateB = b.executiondate ? new Date(b.executiondate).getTime() : 0;
       return dateB - dateA;
     });
 

@@ -12,6 +12,14 @@ import { KangooMascot } from "@/components/kangoo-mascot";
 import { supabase } from "@/lib/supabase";
 import { sendWorkoutMessage } from "@/lib/n8n-message";
 
+export interface WorkoutExercise {
+  exerciseId: string;
+  exerciseName: string;
+  sets: number;
+  reps: number;
+  weight?: number;
+}
+
 export interface Workout {
   id: string;
   name: string;
