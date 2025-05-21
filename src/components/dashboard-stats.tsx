@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip } from "recharts";
 
@@ -23,17 +22,7 @@ export function StatsCard({ title, value, description, className }: StatsCardPro
   );
 }
 
-export function WorkoutChart() {
-  const data = [
-    { name: "Seg", tempo: 30, calorias: 240 },
-    { name: "Ter", tempo: 45, calorias: 320 },
-    { name: "Qua", tempo: 0, calorias: 0 },
-    { name: "Qui", tempo: 60, calorias: 450 },
-    { name: "Sex", tempo: 50, calorias: 380 },
-    { name: "Sáb", tempo: 90, calorias: 520 },
-    { name: "Dom", tempo: 0, calorias: 0 },
-  ];
-
+export function WorkoutChart({ data }: { data: { name: string; tempo: number }[] }) {
   return (
     <Card className="col-span-3">
       <CardHeader>
@@ -67,13 +56,6 @@ export function WorkoutChart() {
                 radius={[4, 4, 0, 0]} 
                 name="Tempo"
               />
-              <Bar 
-                dataKey="calorias" 
-                fill="hsl(var(--secondary))" 
-                radius={[4, 4, 0, 0]} 
-                name="Calorias"
-                hide
-              />
             </BarChart>
           </ResponsiveContainer>
         </div>
@@ -82,12 +64,34 @@ export function WorkoutChart() {
   );
 }
 
-export function UpcomingWorkoutsCard() {
-  const workouts = [
-    { day: "Hoje", name: "Treino de Pernas", time: "18:00" },
-    { day: "Amanhã", name: "Treino de Braços", time: "19:00" },
-    { day: "Quinta", name: "Cardio Intenso", time: "17:30" },
-  ];
+interface Exercise {
+  // Add appropriate properties for Exercise type
+}
+
+interface UpcomingWorkout {
+  workout_name: string;
+  date?: string;
+  exercises?: Exercise[];
+}
+
+export function UpcomingWorkoutsCard({ workouts = [] }: { workouts: UpcomingWorkout[] }) {
+  // Helper para formatar a data
+  function getDayLabel(dateStr?: string) {
+    if (!dateStr) return "";
+    const date = new Date(dateStr);
+    const now = new Date();
+    if (date.toDateString() === now.toDateString()) return "Hoje";
+    const tomorrow = new Date(now);
+    tomorrow.setDate(now.getDate() + 1);
+    if (date.toDateString() === tomorrow.toDateString()) return "Amanhã";
+    return date.toLocaleDateString('pt-BR', { weekday: 'long' });
+  }
+
+  function getDateLabel(dateStr?: string) {
+    if (!dateStr) return "";
+    const date = new Date(dateStr);
+    return `Criado em: ${date.toLocaleDateString('pt-BR')}`;
+  }
 
   return (
     <Card>
@@ -96,17 +100,18 @@ export function UpcomingWorkoutsCard() {
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
-          {workouts.map((workout, i) => (
-            <div key={i} className="flex justify-between items-center">
-              <div>
-                <p className="text-sm font-medium">{workout.name}</p>
-                <p className="text-xs text-muted-foreground">{workout.day}</p>
+          {workouts.length === 0 ? (
+            <p className="text-muted-foreground text-sm">Nenhum treino agendado.</p>
+          ) : (
+            workouts.map((workout, i) => (
+              <div key={i} className="flex justify-between items-center">
+                <div>
+                  <p className="text-sm font-medium">{workout.workout_name || 'Treino'}</p>
+                  <p className="text-xs text-muted-foreground">{getDateLabel(workout.date)}</p>
+                </div>
               </div>
-              <div className="text-sm bg-primary/10 text-primary px-2 py-1 rounded">
-                {workout.time}
-              </div>
-            </div>
-          ))}
+            ))
+          )}
         </div>
       </CardContent>
     </Card>

@@ -44,6 +44,7 @@ interface WorkoutExecutionProps {
   onOpenChange: (open: boolean) => void;
   exercises: WorkoutExercise[];
   workoutName: string;
+  workoutId: string;
   onComplete: (notes: string, feedback: WorkoutFeedback) => void;
 }
 
@@ -143,6 +144,7 @@ export function WorkoutExecution({
   onOpenChange,
   exercises,
   workoutName,
+  workoutId,
   onComplete
 }: WorkoutExecutionProps) {
   const [currentExerciseIndex, setCurrentExerciseIndex] = useState(0);
@@ -250,7 +252,14 @@ export function WorkoutExecution({
       const user = userData?.user;
       if (!user) throw new Error("Usuário não autenticado");
 
-      const workoutId = crypto.randomUUID();
+      // Verifica se já existe completed_workout para este workoutId e user_id
+      const { data: existingWorkout } = await supabase
+        .from("completed_workouts")
+        .select("*")
+        .eq("workout_id", workoutId)
+        .eq("user_id", user.id)
+        .single();
+
       const message = {
         type: 'workout_completed' as const,
         data: {
@@ -273,25 +282,40 @@ export function WorkoutExecution({
       n8nFeedback.message = cleanFeedbackMessage(n8nFeedback.message);
       setFeedback(n8nFeedback);
 
-      // Save workout to Supabase
-      const { error: saveError } = await supabase
-        .from("completed_workouts")
-        .insert([{
-          workout_id: workoutId,
-          workout_name: workoutName || 'Treino sem nome',
-          exercises: exercises,
-          exercise_count: exercises.length,
-          date: new Date().toISOString(),
-          user_id: user.id,
-          completed: true,
-          feedback_message: n8nFeedback.message,
-          feedback_suggestions: n8nFeedback.suggestions,
-          next_workout_focus: n8nFeedback.nextWorkout?.focus,
-          next_workout_recommendations: n8nFeedback.nextWorkout?.recommendations
-        }]);
-
-      if (saveError) {
-        throw new Error(`Erro ao salvar treino: ${saveError.message}`);
+      if (existingWorkout) {
+        // UPDATE
+        const { error: updateError } = await supabase
+          .from("completed_workouts")
+          .update({
+            exercises: exercises,
+            completed: true,
+            feedback_message: n8nFeedback.message,
+            feedback_suggestions: n8nFeedback.suggestions,
+            next_workout_focus: n8nFeedback.nextWorkout?.focus,
+            next_workout_recommendations: n8nFeedback.nextWorkout?.recommendations,
+            date: new Date().toISOString()
+          })
+          .eq("workout_id", workoutId)
+          .eq("user_id", user.id);
+        if (updateError) throw new Error(updateError.message);
+      } else {
+        // INSERT
+        const { error: insertError } = await supabase
+          .from("completed_workouts")
+          .insert([{
+            workout_id: workoutId,
+            workout_name: workoutName || 'Treino sem nome',
+            exercises: exercises,
+            exercise_count: exercises.length,
+            date: new Date().toISOString(),
+            user_id: user.id,
+            completed: true,
+            feedback_message: n8nFeedback.message,
+            feedback_suggestions: n8nFeedback.suggestions,
+            next_workout_focus: n8nFeedback.nextWorkout?.focus,
+            next_workout_recommendations: n8nFeedback.nextWorkout?.recommendations
+          }]);
+        if (insertError) throw new Error(insertError.message);
       }
 
       setIsWorkoutComplete(true);

@@ -182,22 +182,39 @@ const Workouts = () => {
       return;
     }
 
-    // 5. Inserir no histórico
-    const { error: historyError } = await supabase
+    // 5. Inserir no histórico (apenas se não existir)
+    const { data: existingHistory } = await supabase
       .from("workout_history")
-      .insert([
-        {
-          user_id: workout.user_id,
-          workout_id: workout.workout_id,
-          workout_name: workout.workout_name || 'Treino',
-          executed_at: currentDate,
-          exercises: workout.exercises,
-          notes: notes || null,
-          feedback: n8nFeedback?.message || null
-        }
-      ]);
-    if (historyError) {
-      console.error("Erro ao salvar histórico do treino:", historyError);
+      .select("id")
+      .eq("user_id", workout.user_id)
+      .eq("workout_id", workout.workout_id)
+      .maybeSingle();
+    if (!existingHistory) {
+      console.log('Salvando no histórico:', {
+        user_id: workout.user_id,
+        workout_id: workout.workout_id,
+        workout_name: workout.workout_name || 'Treino',
+        executed_at: currentDate,
+        exercises: workout.exercises,
+        notes: notes || null,
+        feedback: n8nFeedback?.message || null
+      });
+      const { error: historyError } = await supabase
+        .from("workout_history")
+        .insert([
+          {
+            user_id: workout.user_id,
+            workout_id: workout.workout_id,
+            workout_name: workout.workout_name || 'Treino',
+            executed_at: currentDate,
+            exercises: workout.exercises,
+            notes: notes || null,
+            feedback: n8nFeedback?.message || null
+          }
+        ]);
+      if (historyError) {
+        console.error("Erro ao salvar histórico do treino:", historyError);
+      }
     }
 
     await fetchWorkouts();

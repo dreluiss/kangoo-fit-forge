@@ -78,14 +78,6 @@ export function WorkoutList({ workouts, onViewWorkout, onCreateWorkout }: Workou
                       <CalendarIcon className="mr-1 h-3 w-3" />
                       {format(new Date(workout.date), "dd 'de' MMMM", { locale: pt })}
                     </CardDescription>
-                    {workout.feedback_message && (
-                      <div className="mt-2 border-2 border-cyan-400 bg-blue-50 dark:bg-blue-900/20 rounded-lg p-2 flex items-start gap-2">
-                        <KangooMascot variant="small" />
-                        <span className="text-sm font-medium text-blue-900 dark:text-blue-100">
-                          {workout.feedback_message}
-                        </span>
-                      </div>
-                    )}
                   </div>
                   {workout.completed && (
                     <Badge variant="secondary">Concluído</Badge>
@@ -363,6 +355,7 @@ export function WorkoutDetail({ workout, onComplete, onDelete, onBack }: Workout
         onOpenChange={setIsExecutionModalOpen}
         exercises={workout.exercises}
         workoutName={workout.name}
+        workoutId={workout.id}
         onComplete={handleExecutionComplete}
       />
     </div>

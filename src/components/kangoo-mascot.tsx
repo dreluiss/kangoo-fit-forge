@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { cn } from "@/lib/utils";
 
@@ -26,7 +25,9 @@ export function KangooMascot({ className, variant = 'default', message }: Kangoo
   const [currentMessage, setCurrentMessage] = useState<string>(message || motivationalMessages[0]);
 
   useEffect(() => {
-    if (!message) {
+    if (message) {
+      setCurrentMessage(message);
+    } else {
       const randomIndex = Math.floor(Math.random() * motivationalMessages.length);
       setCurrentMessage(motivationalMessages[randomIndex]);
     }
@@ -34,11 +35,11 @@ export function KangooMascot({ className, variant = 'default', message }: Kangoo
 
   return (
     <div className={cn(
-      "flex flex-col items-center",
+      "flex flex-row items-start w-full",
       variant === 'small' ? "gap-2" : "gap-4",
       className
     )}>
-      <div className="relative">
+      <div className="relative" style={{ minWidth: variant === 'small' ? 40 : 80 }}>
         {variant === 'small' ? (
           <div className="w-10 h-10 rounded-full overflow-hidden">
             <img 
@@ -65,9 +66,11 @@ export function KangooMascot({ className, variant = 'default', message }: Kangoo
       </div>
       
       {variant === 'default' && (
-        <div className="bg-secondary/10 dark:bg-secondary/20 p-4 rounded-lg max-w-md text-center text-sm relative">
-          <div className="absolute -top-2 left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-8 border-r-8 border-b-8 border-transparent border-b-secondary/10 dark:border-b-secondary/20"></div>
-          <p className="font-medium">{currentMessage}</p>
+        <div className="bg-white/80 dark:bg-secondary/20 p-4 rounded-lg w-full text-left text-sm relative border border-neutral-200 dark:border-none">
+          <div className="absolute -top-2 left-8 w-0 h-0 border-l-8 border-r-8 border-b-8 border-transparent border-b-white/80 dark:border-b-secondary/20"></div>
+          {currentMessage.split(/\n\n|\n/).map((paragraph, idx) => (
+            <p className="font-medium" key={idx} style={{ marginBottom: 8 }}>{paragraph}</p>
+          ))}
         </div>
       )}
     </div>
